@@ -31,7 +31,7 @@ func LoggerMiddleware(db *gorm.DB) gin.HandlerFunc {
 		// Registrar log no banco de dados para operações importantes
 		if c.Request.Method != "GET" && c.Writer.Status() < 400 {
 			log := models.SystemLog{
-				UserID:    userID.(uint),
+				UserID:    userID.(*uint),
 				Action:    c.Request.Method + " " + c.Request.URL.Path,
 				IPAddress: c.ClientIP(),
 				Details: map[string]interface{}{

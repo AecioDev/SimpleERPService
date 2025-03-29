@@ -2,6 +2,7 @@ package db
 
 import (
 	"simple-erp-service/config"
+	"simple-erp-service/migrations"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -17,9 +18,15 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// Registrar modelos para auto-migração se necessário
-	// Nota: Como já temos o esquema SQL, não precisamos de auto-migração
-	// mas é bom ter isso configurado para desenvolvimento
+	// Executar migrações
+	if err := migrations.MigrateDB(db); err != nil {
+		return nil, err
+	}
+
+	// Executar seed
+	if err := SeedDB(db); err != nil {
+		return nil, err
+	}
 
 	return db, nil
 }

@@ -1,20 +1,22 @@
 package models
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
 // Permission representa uma permissão no sistema
 type Permission struct {
-	ID          uint           `gorm:"primaryKey" json:"id"`
-	Name        string         `gorm:"size:100;not null;unique" json:"name"`
-	Description string         `json:"description"`
-	Module      string         `gorm:"size:50;not null" json:"module"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+	gorm.Model
+
+	Name        string `gorm:"size:100;not null;unique" json:"name"`
+	Description string `json:"description"`
+	Module      string `gorm:"size:50;not null" json:"module"`
+	Roles       []Role `gorm:"many2many:role_permissions;" json:"-"`
+}
+
+// TableName especifica o nome da tabela
+func (Permission) TableName() string {
+	return "permissions"
 }
 
 // PermissionsByModule agrupa permissões por módulo

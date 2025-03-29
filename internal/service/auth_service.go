@@ -38,7 +38,7 @@ func (s *AuthService) Login(username, password string) (*LoginResponse, error) {
 	var user models.User
 
 	// Buscar usuário pelo username
-	result := s.db.Preload("Role.Permissions").Where("username = ?", username).First(&user)
+	result := s.db.Preload("Role.Permissions").Where("LOWER(username) = LOWER(?)", username).First(&user)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, errors.New("usuário não encontrado")
@@ -96,9 +96,9 @@ func (s *AuthService) RefreshToken(refreshToken string) (*LoginResponse, error) 
 		return nil, err
 	}
 
-	// Buscar usuário
+	// Buscar usuário Where("LOWER(username) = LOWER(?)", username).
 	var user models.User
-	result := s.db.Preload("Role.Permissions").Where("username = ?", claims.Subject).First(&user)
+	result := s.db.Preload("Role.Permissions").Where("LOWER(username) = LOWER(?)", claims.Subject).First(&user)
 	if result.Error != nil {
 		return nil, result.Error
 	}
