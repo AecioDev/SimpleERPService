@@ -22,7 +22,7 @@ func NewRoleService(db *gorm.DB) *RoleService {
 }
 
 // GetRoles retorna uma lista paginada de perfis
-func (s *RoleService) GetRoles(pagination *utils.Pagination) ([]models.Role, error) {
+func (s *RoleService) GetRoles(pagination *utils.Pagination) ([]models.RoleDTO, error) {
 	var roles []models.Role
 
 	query := s.db.Model(&models.Role{})
@@ -35,20 +35,29 @@ func (s *RoleService) GetRoles(pagination *utils.Pagination) ([]models.Role, err
 		return nil, err
 	}
 
-	return roles, nil
+	// Converter para DTOs
+	roleDTOs := make([]models.RoleDTO, 0, len(roles))
+	for _, role := range roles {
+		roleDTOs = append(roleDTOs, role.ToDTO())
+	}
+
+	return roleDTOs, nil
 }
 
 // GetRoleByID busca um perfil pelo ID
-func (s *RoleService) GetRoleByID(id uint) (*models.Role, error) {
+func (s *RoleService) GetRoleByID(id uint) (*models.RoleDetailDTO, error) {
 	var role models.Role
 	if err := s.db.Preload("Permissions").First(&role, id).Error; err != nil {
 		return nil, err
 	}
-	return &role, nil
+
+	// Converter para DTO
+	roleDetailDTO := role.ToDetailDTO()
+	return &roleDetailDTO, nil
 }
 
 // CreateRole cria um novo perfil
-func (s *RoleService) CreateRole(req models.CreateRoleRequest) (*models.Role, error) {
+func (s *RoleService) CreateRole(req models.CreateRoleRequest) (*models.RoleDTO, error) {
 	// Verificar se o nome já existe
 	var count int64
 	s.db.Model(&models.Role{}).Where("name = ?", req.Name).Count(&count)
@@ -66,11 +75,13 @@ func (s *RoleService) CreateRole(req models.CreateRoleRequest) (*models.Role, er
 		return nil, err
 	}
 
-	return &role, nil
+	// Converter para DTO
+	roleDTO := role.ToDTO()
+	return &roleDTO, nil
 }
 
 // UpdateRole atualiza um perfil existente
-func (s *RoleService) UpdateRole(id uint, req models.UpdateRoleRequest) (*models.Role, error) {
+func (s *RoleService) UpdateRole(id uint, req models.UpdateRoleRequest) (*models.RoleDTO, error) {
 	// Buscar perfil
 	var role models.Role
 	if err := s.db.First(&role, id).Error; err != nil {
@@ -99,7 +110,9 @@ func (s *RoleService) UpdateRole(id uint, req models.UpdateRoleRequest) (*models
 		return nil, err
 	}
 
-	return &role, nil
+	// Converter para DTO
+	roleDTO := role.ToDTO()
+	return &roleDTO, nil
 }
 
 // DeleteRole exclui um perfil
@@ -116,16 +129,23 @@ func (s *RoleService) DeleteRole(id uint) error {
 }
 
 // GetPermissions retorna todas as permissões
-func (s *RoleService) GetPermissions() ([]models.Permission, error) {
+func (s *RoleService) GetPermissions() ([]models.PermissionDTO, error) {
 	var permissions []models.Permission
 	if err := s.db.Find(&permissions).Error; err != nil {
 		return nil, err
 	}
-	return permissions, nil
+
+	// Converter para DTOs
+	permissionDTOs := make([]models.PermissionDTO, 0, len(permissions))
+	for _, perm := range permissions {
+		permissionDTOs = append(permissionDTOs, perm.ToDTO())
+	}
+
+	return permissionDTOs, nil
 }
 
 // GetPermissionsByModule retorna permissões agrupadas por módulo
-func (s *RoleService) GetPermissionsByModule() ([]models.PermissionsByModule, error) {
+func (s *RoleService) GetPermissionsByModule() ([]models.PermissionsByModuleDTO, error) {
 	var permissions []models.Permission
 	if err := s.db.Find(&permissions).Error; err != nil {
 		return nil, err
@@ -146,11 +166,17 @@ func (s *RoleService) GetPermissionsByModule() ([]models.PermissionsByModule, er
 		})
 	}
 
-	return result, nil
+	// Converter para DTOs
+	resultDTOs := make([]models.PermissionsByModuleDTO, 0, len(result))
+	for _, item := range result {
+		resultDTOs = append(resultDTOs, item.ToDTO())
+	}
+
+	return resultDTOs, nil
 }
 
 // UpdateRolePermissions atualiza as permissões de um perfil
-func (s *RoleService) UpdateRolePermissions(id uint, permissionIDs []uint) (*models.Role, error) {
+func (s *RoleService) UpdateRolePermissions(id uint, permissionIDs []uint) (*models.RoleDetailDTO, error) {
 	// Buscar perfil
 	var role models.Role
 	if err := s.db.First(&role, id).Error; err != nil {
@@ -178,5 +204,7 @@ func (s *RoleService) UpdateRolePermissions(id uint, permissionIDs []uint) (*mod
 		return nil, err
 	}
 
-	return &role, nil
+	// Converter para DTO
+	roleDetailDTO := role.ToDetailDTO()
+	return &roleDetailDTO, nil
 }

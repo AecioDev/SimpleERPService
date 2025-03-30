@@ -25,6 +25,20 @@ func NewRoleHandler(db *gorm.DB) *RoleHandler {
 }
 
 // GetRoles retorna uma lista paginada de perfis
+// @Summary Listar perfis
+// @Description Retorna uma lista paginada de perfis
+// @Tags roles
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param page query int false "Número da página" default(1)
+// @Param limit query int false "Limite de itens por página" default(10)
+// @Param sort query string false "Campo para ordenação" default(id)
+// @Param order query string false "Direção da ordenação (asc/desc)" default(asc)
+// @Success 200 {object} utils.Response "Perfis encontrados"
+// @Failure 401 {object} utils.Response "Não autorizado"
+// @Failure 500 {object} utils.Response "Erro ao buscar perfis"
+// @Router /roles [get]
 func (h *RoleHandler) GetRoles(c *gin.Context) {
 	pagination := utils.GetPaginationParams(c)
 
@@ -38,6 +52,18 @@ func (h *RoleHandler) GetRoles(c *gin.Context) {
 }
 
 // GetRole retorna um perfil específico
+// @Summary Buscar perfil
+// @Description Retorna um perfil específico pelo ID
+// @Tags roles
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path int true "ID do perfil"
+// @Success 200 {object} utils.Response "Perfil encontrado"
+// @Failure 400 {object} utils.Response "ID inválido"
+// @Failure 401 {object} utils.Response "Não autorizado"
+// @Failure 404 {object} utils.Response "Perfil não encontrado"
+// @Router /roles/{id} [get]
 func (h *RoleHandler) GetRole(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -55,6 +81,17 @@ func (h *RoleHandler) GetRole(c *gin.Context) {
 }
 
 // CreateRole cria um novo perfil
+// @Summary Criar perfil
+// @Description Cria um novo perfil
+// @Tags roles
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param request body models.CreateRoleRequest true "Dados do perfil"
+// @Success 201 {object} utils.Response "Perfil criado com sucesso"
+// @Failure 400 {object} utils.Response "Dados inválidos"
+// @Failure 401 {object} utils.Response "Não autorizado"
+// @Router /roles [post]
 func (h *RoleHandler) CreateRole(c *gin.Context) {
 	var req models.CreateRoleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -72,6 +109,19 @@ func (h *RoleHandler) CreateRole(c *gin.Context) {
 }
 
 // UpdateRole atualiza um perfil existente
+// @Summary Atualizar perfil
+// @Description Atualiza um perfil existente
+// @Tags roles
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path int true "ID do perfil"
+// @Param request body models.UpdateRoleRequest true "Dados do perfil"
+// @Success 200 {object} utils.Response "Perfil atualizado com sucesso"
+// @Failure 400 {object} utils.Response "Dados inválidos"
+// @Failure 401 {object} utils.Response "Não autorizado"
+// @Failure 404 {object} utils.Response "Perfil não encontrado"
+// @Router /roles/{id} [put]
 func (h *RoleHandler) UpdateRole(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -95,6 +145,18 @@ func (h *RoleHandler) UpdateRole(c *gin.Context) {
 }
 
 // DeleteRole exclui um perfil
+// @Summary Excluir perfil
+// @Description Exclui um perfil
+// @Tags roles
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path int true "ID do perfil"
+// @Success 200 {object} utils.Response "Perfil excluído com sucesso"
+// @Failure 400 {object} utils.Response "ID inválido"
+// @Failure 401 {object} utils.Response "Não autorizado"
+// @Failure 404 {object} utils.Response "Perfil não encontrado"
+// @Router /roles/{id} [delete]
 func (h *RoleHandler) DeleteRole(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -111,6 +173,16 @@ func (h *RoleHandler) DeleteRole(c *gin.Context) {
 }
 
 // GetPermissions retorna todas as permissões
+// @Summary Listar permissões
+// @Description Retorna todas as permissões
+// @Tags roles
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} utils.Response "Permissões encontradas"
+// @Failure 401 {object} utils.Response "Não autorizado"
+// @Failure 500 {object} utils.Response "Erro ao buscar permissões"
+// @Router /roles/permissions [get]
 func (h *RoleHandler) GetPermissions(c *gin.Context) {
 	permissions, err := h.roleService.GetPermissions()
 	if err != nil {
@@ -122,6 +194,16 @@ func (h *RoleHandler) GetPermissions(c *gin.Context) {
 }
 
 // GetPermissionsByModule retorna permissões agrupadas por módulo
+// @Summary Listar permissões por módulo
+// @Description Retorna permissões agrupadas por módulo
+// @Tags roles
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} utils.Response "Permissões encontradas"
+// @Failure 401 {object} utils.Response "Não autorizado"
+// @Failure 500 {object} utils.Response "Erro ao buscar permissões"
+// @Router /roles/permissions/by-module [get]
 func (h *RoleHandler) GetPermissionsByModule(c *gin.Context) {
 	permissions, err := h.roleService.GetPermissionsByModule()
 	if err != nil {
@@ -133,6 +215,19 @@ func (h *RoleHandler) GetPermissionsByModule(c *gin.Context) {
 }
 
 // UpdateRolePermissions atualiza as permissões de um perfil
+// @Summary Atualizar permissões de perfil
+// @Description Atualiza as permissões de um perfil
+// @Tags roles
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path int true "ID do perfil"
+// @Param request body models.UpdateRolePermissionsRequest true "IDs das permissões"
+// @Success 200 {object} utils.Response "Permissões atualizadas com sucesso"
+// @Failure 400 {object} utils.Response "Dados inválidos"
+// @Failure 401 {object} utils.Response "Não autorizado"
+// @Failure 404 {object} utils.Response "Perfil não encontrado"
+// @Router /roles/{id}/permissions [put]
 func (h *RoleHandler) UpdateRolePermissions(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
