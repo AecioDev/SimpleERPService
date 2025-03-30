@@ -51,13 +51,13 @@ func (s *UserService) GetUserByID(id uint) (*models.User, error) {
 func (s *UserService) CreateUser(req models.CreateUserRequest) (*models.User, error) {
 	// Verificar se o username já existe
 	var count int64
-	s.db.Model(&models.User{}).Where("username = ?", req.Username).Count(&count)
+	s.db.Model(&models.User{}).Where("LOWER(username) = LOWER(?)", req.Username).Count(&count)
 	if count > 0 {
 		return nil, errors.New("username já está em uso")
 	}
 
 	// Verificar se o email já existe
-	s.db.Model(&models.User{}).Where("email = ?", req.Email).Count(&count)
+	s.db.Model(&models.User{}).Where("LOWER(email) = LOWER(?)", req.Email).Count(&count)
 	if count > 0 {
 		return nil, errors.New("email já está em uso")
 	}
@@ -106,7 +106,7 @@ func (s *UserService) UpdateUser(id uint, req models.UpdateUserRequest) (*models
 	// Verificar se o email já está em uso por outro usuário
 	if req.Email != "" && req.Email != user.Email {
 		var count int64
-		s.db.Model(&models.User{}).Where("email = ? AND id != ?", req.Email, id).Count(&count)
+		s.db.Model(&models.User{}).Where("LOWER(email) = LOWER(?) AND id != ?", req.Email, id).Count(&count)
 		if count > 0 {
 			return nil, errors.New("email já está em uso")
 		}
