@@ -15,10 +15,10 @@ type User struct {
 	Name         string     `gorm:"size:100;not null" json:"name"`
 	Email        string     `gorm:"size:100;unique" json:"email"`
 	Phone        string     `gorm:"size:20" json:"phone"`
-	RoleID       uint       `json:"role_id"`
-	Role         *Role      `gorm:"foreignKey:RoleID" json:"role,omitempty"`
 	IsActive     bool       `gorm:"default:true" json:"is_active"`
 	LastLogin    *time.Time `json:"last_login"`
+	RoleID       uint       `json:"role_id"`
+	Role         *Role      `gorm:"foreignKey:RoleID" json:"role,omitempty"`
 }
 
 // TableName especifica o nome da tabela
@@ -70,10 +70,11 @@ type CreateUserRequest struct {
 
 // UpdateUserRequest representa os dados para atualizar um usuário
 type UpdateUserRequest struct {
-	Name   string `json:"name"`
-	Email  string `json:"email" binding:"omitempty,email"`
-	Phone  string `json:"phone"`
-	RoleID uint   `json:"role_id"`
+	Name     string `json:"name"`
+	Email    string `json:"email" binding:"omitempty,email"`
+	Phone    string `json:"phone"`
+	RoleID   uint   `json:"role_id"`
+	IsActive *bool  `json:"is_active"`
 }
 
 // ChangePasswordRequest representa os dados para alterar a senha

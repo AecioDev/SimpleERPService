@@ -25,6 +25,20 @@ func NewUserHandler(db *gorm.DB) *UserHandler {
 }
 
 // GetUsers retorna uma lista paginada de usuários
+// @Summary Listar usuários
+// @Description Retorna uma lista paginada de usuários
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param page query int false "Número da página" default(1)
+// @Param limit query int false "Limite de itens por página" default(10)
+// @Param sort query string false "Campo para ordenação" default(id)
+// @Param order query string false "Direção da ordenação (asc/desc)" default(asc)
+// @Success 200 {object} utils.Response "Usuários encontrados"
+// @Failure 401 {object} utils.Response "Não autorizado"
+// @Failure 500 {object} utils.Response "Erro ao buscar usuários"
+// @Router /users [get]
 func (h *UserHandler) GetUsers(c *gin.Context) {
 	pagination := utils.GetPaginationParams(c)
 
@@ -34,16 +48,22 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 		return
 	}
 
-	// Converter para resposta
-	var response []models.UserResponse
-	for _, user := range users {
-		response = append(response, user.ToResponse())
-	}
-
-	utils.SuccessResponse(c, http.StatusOK, "Usuários encontrados", response, pagination)
+	utils.SuccessResponse(c, http.StatusOK, "Usuários encontrados", users, nil)
 }
 
 // GetUser retorna um usuário específico
+// @Summary Buscar usuário
+// @Description Retorna um usuário específico pelo ID
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path int true "ID do usuário"
+// @Success 200 {object} utils.Response "Usuário encontrado"
+// @Failure 400 {object} utils.Response "ID inválido"
+// @Failure 401 {object} utils.Response "Não autorizado"
+// @Failure 404 {object} utils.Response "Usuário não encontrado"
+// @Router /users/{id} [get]
 func (h *UserHandler) GetUser(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -57,10 +77,21 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Usuário encontrado", user.ToResponse(), nil)
+	utils.SuccessResponse(c, http.StatusOK, "Usuário encontrado", user, nil)
 }
 
 // CreateUser cria um novo usuário
+// @Summary Criar usuário
+// @Description Cria um novo usuário
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param request body models.CreateUserRequest true "Dados do usuário"
+// @Success 201 {object} utils.Response "Usuário criado com sucesso"
+// @Failure 400 {object} utils.Response "Dados inválidos"
+// @Failure 401 {object} utils.Response "Não autorizado"
+// @Router /users [post]
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var req models.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -74,10 +105,23 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusCreated, "Usuário criado com sucesso", user.ToResponse(), nil)
+	utils.SuccessResponse(c, http.StatusCreated, "Usuário criado com sucesso", user, nil)
 }
 
 // UpdateUser atualiza um usuário existente
+// @Summary Atualizar usuário
+// @Description Atualiza um usuário existente
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path int true "ID do usuário"
+// @Param request body models.UpdateUserRequest true "Dados do usuário"
+// @Success 200 {object} utils.Response "Usuário atualizado com sucesso"
+// @Failure 400 {object} utils.Response "Dados inválidos"
+// @Failure 401 {object} utils.Response "Não autorizado"
+// @Failure 404 {object} utils.Response "Usuário não encontrado"
+// @Router /users/{id} [put]
 func (h *UserHandler) UpdateUser(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -97,42 +141,28 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Usuário atualizado com sucesso", user.ToResponse(), nil)
-}
-
-// DeleteUser desativa um usuário
-func (h *UserHandler) DeleteUser(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "ID inválido", err.Error())
-		return
-	}
-
-	if err := h.userService.DeleteUser(uint(id)); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao desativar usuário", err.Error())
-		return
-	}
-
-	utils.SuccessResponse(c, http.StatusOK, "Usuário desativado com sucesso", nil, nil)
+	utils.SuccessResponse(c, http.StatusOK, "Usuário atualizado com sucesso", user, nil)
 }
 
 // ChangePassword altera a senha de um usuário
+// @Summary Alterar senha
+// @Description Altera a senha de um usuário
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path int true "ID do usuário"
+// @Param request body models.ChangePasswordRequest true "Dados da senha"
+// @Success 200 {object} utils.Response "Senha alterada com sucesso"
+// @Failure 400 {object} utils.Response "Dados inválidos"
+// @Failure 401 {object} utils.Response "Não autorizado"
+// @Failure 404 {object} utils.Response "Usuário não encontrado"
+// @Router /users/{id}/password [put]
 func (h *UserHandler) ChangePassword(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "ID inválido", err.Error())
 		return
-	}
-
-	// Verificar se o usuário está alterando sua própria senha
-	userID, exists := c.Get("userID")
-	if !exists || userID.(uint) != uint(id) {
-		// Verificar se o usuário tem permissão para alterar senhas de outros usuários
-		role, exists := c.Get("role")
-		if !exists || role.(string) != "ADMIN" {
-			utils.ErrorResponse(c, http.StatusForbidden, "Acesso negado", "Você não tem permissão para alterar a senha de outro usuário")
-			return
-		}
 	}
 
 	var req models.ChangePasswordRequest
@@ -141,10 +171,65 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.userService.ChangePassword(uint(id), req.CurrentPassword, req.NewPassword); err != nil {
+	// Verificar se o usuário é admin ou está alterando a própria senha
+	userID, _ := c.Get("userID")
+	role, _ := c.Get("role")
+	isAdmin := role == "ADMIN"
+	isSelf := userID.(uint) == uint(id)
+
+	// Se não for admin e não for o próprio usuário, negar acesso
+	if !isAdmin && !isSelf {
+		utils.ErrorResponse(c, http.StatusForbidden, "Acesso negado", "Você não tem permissão para alterar a senha de outro usuário")
+		return
+	}
+
+	// Se for admin alterando a senha de outro usuário, não precisa da senha atual
+	if isAdmin && !isSelf {
+		err = h.userService.ChangePassword(uint(id), "", req.NewPassword, true)
+	} else {
+		// Se for o próprio usuário ou admin alterando a própria senha, precisa da senha atual
+		err = h.userService.ChangePassword(uint(id), req.CurrentPassword, req.NewPassword, false)
+	}
+
+	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao alterar senha", err.Error())
 		return
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Senha alterada com sucesso", nil, nil)
+}
+
+// DeleteUser exclui um usuário
+// @Summary Excluir usuário
+// @Description Exclui um usuário
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path int true "ID do usuário"
+// @Success 200 {object} utils.Response "Usuário excluído com sucesso"
+// @Failure 400 {object} utils.Response "ID inválido"
+// @Failure 401 {object} utils.Response "Não autorizado"
+// @Failure 404 {object} utils.Response "Usuário não encontrado"
+// @Router /users/{id} [delete]
+func (h *UserHandler) DeleteUser(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "ID inválido", err.Error())
+		return
+	}
+
+	// Impedir que um usuário exclua a si mesmo
+	userID, _ := c.Get("userID")
+	if userID.(uint) == uint(id) {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Operação inválida", "Você não pode excluir seu próprio usuário")
+		return
+	}
+
+	if err := h.userService.DeleteUser(uint(id)); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao excluir usuário", err.Error())
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Usuário excluído com sucesso", nil, nil)
 }

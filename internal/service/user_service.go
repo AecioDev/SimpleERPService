@@ -22,7 +22,7 @@ func NewUserService(db *gorm.DB) *UserService {
 }
 
 // GetUsers retorna uma lista paginada de usuários
-func (s *UserService) GetUsers(pagination *utils.Pagination) ([]models.User, error) {
+func (s *UserService) GetUsers(pagination *utils.Pagination) (*models.UserListDTO, error) {
 	var users []models.User
 
 	query := s.db.Model(&models.User{}).Preload("Role")
@@ -35,31 +35,45 @@ func (s *UserService) GetUsers(pagination *utils.Pagination) ([]models.User, err
 		return nil, err
 	}
 
-	return users, nil
+	// Converter para DTOs
+	userDTOs := make([]models.UserDTO, 0, len(users))
+	for _, user := range users {
+		userDTOs = append(userDTOs, user.ToDTO())
+	}
+
+	return &models.UserListDTO{
+		Data:       userDTOs,
+		Pagination: models.ToPaginationDTO(pagination),
+	}, nil
 }
 
 // GetUserByID busca um usuário pelo ID
-func (s *UserService) GetUserByID(id uint) (*models.User, error) {
+func (s *UserService) GetUserByID(id uint) (*models.UserDetailDTO, error) {
 	var user models.User
 	if err := s.db.Preload("Role").First(&user, id).Error; err != nil {
 		return nil, err
 	}
-	return &user, nil
+
+	// Converter para DTO
+	userDetailDTO := user.ToDetailDTO()
+	return &userDetailDTO, nil
 }
 
 // CreateUser cria um novo usuário
-func (s *UserService) CreateUser(req models.CreateUserRequest) (*models.User, error) {
+func (s *UserService) CreateUser(req models.CreateUserRequest) (*models.UserDTO, error) {
 	// Verificar se o username já existe
 	var count int64
-	s.db.Model(&models.User{}).Where("LOWER(username) = LOWER(?)", req.Username).Count(&count)
+	s.db.Model(&models.User{}).Where("username = ?", req.Username).Count(&count)
 	if count > 0 {
-		return nil, errors.New("username já está em uso")
+		return nil, errors.New("nome de usuário já está em uso")
 	}
 
-	// Verificar se o email já existe
-	s.db.Model(&models.User{}).Where("LOWER(email) = LOWER(?)", req.Email).Count(&count)
-	if count > 0 {
-		return nil, errors.New("email já está em uso")
+	// Verificar se o email já existe (se fornecido)
+	if req.Email != "" {
+		s.db.Model(&models.User{}).Where("email = ?", req.Email).Count(&count)
+		if count > 0 {
+			return nil, errors.New("email já está em uso")
+		}
 	}
 
 	// Verificar se o perfil existe
@@ -68,7 +82,7 @@ func (s *UserService) CreateUser(req models.CreateUserRequest) (*models.User, er
 		return nil, errors.New("perfil não encontrado")
 	}
 
-	// Gerar hash da senha
+	// Hash da senha
 	passwordHash, err := utils.HashPassword(req.Password)
 	if err != nil {
 		return nil, err
@@ -80,39 +94,40 @@ func (s *UserService) CreateUser(req models.CreateUserRequest) (*models.User, er
 		PasswordHash: passwordHash,
 		Name:         req.Name,
 		Email:        req.Email,
-		Phone:        req.Phone,
 		RoleID:       req.RoleID,
-		IsActive:     true,
+		IsActive:     true, // Por padrão, usuários são criados ativos
 	}
 
 	if err := s.db.Create(&user).Error; err != nil {
 		return nil, err
 	}
 
-	// Carregar o perfil
+	// Carregar o perfil para o DTO
 	s.db.Preload("Role").First(&user, user.ID)
 
-	return &user, nil
+	// Converter para DTO
+	userDTO := user.ToDTO()
+	return &userDTO, nil
 }
 
 // UpdateUser atualiza um usuário existente
-func (s *UserService) UpdateUser(id uint, req models.UpdateUserRequest) (*models.User, error) {
+func (s *UserService) UpdateUser(id uint, req models.UpdateUserRequest) (*models.UserDTO, error) {
 	// Buscar usuário
 	var user models.User
 	if err := s.db.First(&user, id).Error; err != nil {
 		return nil, err
 	}
 
-	// Verificar se o email já está em uso por outro usuário
+	// Verificar se o email já está em uso por outro usuário (se fornecido)
 	if req.Email != "" && req.Email != user.Email {
 		var count int64
-		s.db.Model(&models.User{}).Where("LOWER(email) = LOWER(?) AND id != ?", req.Email, id).Count(&count)
+		s.db.Model(&models.User{}).Where("email = ? AND id != ?", req.Email, id).Count(&count)
 		if count > 0 {
 			return nil, errors.New("email já está em uso")
 		}
 	}
 
-	// Verificar se o perfil existe
+	// Verificar se o perfil existe (se fornecido)
 	if req.RoleID != 0 && req.RoleID != user.RoleID {
 		var role models.Role
 		if err := s.db.First(&role, req.RoleID).Error; err != nil {
@@ -127,11 +142,11 @@ func (s *UserService) UpdateUser(id uint, req models.UpdateUserRequest) (*models
 	if req.Email != "" {
 		user.Email = req.Email
 	}
-	if req.Phone != "" {
-		user.Phone = req.Phone
-	}
 	if req.RoleID != 0 {
 		user.RoleID = req.RoleID
+	}
+	if req.IsActive != nil {
+		user.IsActive = *req.IsActive
 	}
 
 	// Salvar alterações
@@ -139,39 +154,30 @@ func (s *UserService) UpdateUser(id uint, req models.UpdateUserRequest) (*models
 		return nil, err
 	}
 
-	// Carregar o perfil
+	// Carregar o perfil para o DTO
 	s.db.Preload("Role").First(&user, user.ID)
 
-	return &user, nil
-}
-
-// DeleteUser desativa um usuário
-func (s *UserService) DeleteUser(id uint) error {
-	// Buscar usuário
-	var user models.User
-	if err := s.db.First(&user, id).Error; err != nil {
-		return err
-	}
-
-	// Desativar usuário
-	user.IsActive = false
-	return s.db.Save(&user).Error
+	// Converter para DTO
+	userDTO := user.ToDTO()
+	return &userDTO, nil
 }
 
 // ChangePassword altera a senha de um usuário
-func (s *UserService) ChangePassword(id uint, currentPassword, newPassword string) error {
+func (s *UserService) ChangePassword(id uint, currentPassword, newPassword string, isAdmin bool) error {
 	// Buscar usuário
 	var user models.User
 	if err := s.db.First(&user, id).Error; err != nil {
 		return err
 	}
 
-	// Verificar senha atual
-	if !utils.CheckPasswordHash(currentPassword, user.PasswordHash) {
-		return errors.New("senha atual incorreta")
+	// Se não for admin, verificar a senha atual
+	if !isAdmin {
+		if !utils.CheckPasswordHash(currentPassword, user.PasswordHash) {
+			return errors.New("senha atual incorreta")
+		}
 	}
 
-	// Gerar hash da nova senha
+	// Hash da nova senha
 	passwordHash, err := utils.HashPassword(newPassword)
 	if err != nil {
 		return err
@@ -180,4 +186,9 @@ func (s *UserService) ChangePassword(id uint, currentPassword, newPassword strin
 	// Atualizar senha
 	user.PasswordHash = passwordHash
 	return s.db.Save(&user).Error
+}
+
+// DeleteUser exclui um usuário (soft delete)
+func (s *UserService) DeleteUser(id uint) error {
+	return s.db.Delete(&models.User{}, id).Error
 }
