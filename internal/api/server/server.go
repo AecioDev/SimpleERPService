@@ -97,7 +97,7 @@ func (s *Server) setupRoutes() {
 	// Configurar rotas para cada módulo
 	routes.SetupAuthRoutes(api, s.db, s.cfg)
 	routes.SetupUserRoutes(api, s.db)
-	routes.SetupRolesRoutes(api, s.db)
+	routes.SetupRoleRoutes(api, s.db)
 	routes.SetupProductsRoutes(api, s.db)
 	routes.SetupInventoryRoutes(api, s.db)
 	routes.SetupCustomersRoutes(api, s.db)
