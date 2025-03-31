@@ -42,7 +42,7 @@ func (s *UserService) GetUsers(pagination *utils.Pagination) (*models.UserListDT
 	}
 
 	return &models.UserListDTO{
-		Data:       userDTOs,
+		Users:      userDTOs,
 		Pagination: models.ToPaginationDTO(pagination),
 	}, nil
 }

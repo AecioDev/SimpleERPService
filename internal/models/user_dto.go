@@ -31,7 +31,7 @@ type UserDetailDTO struct {
 
 // UserListDTO representa uma lista paginada de usuários
 type UserListDTO struct {
-	Data       []UserDTO      `json:"data"`
+	Users      []UserDTO      `json:"users"`
 	Pagination *PaginationDTO `json:"pagination,omitempty"`
 }
 
