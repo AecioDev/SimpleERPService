@@ -48,6 +48,9 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 
 // Run inicia o servidor HTTP
 func (s *Server) Run() error {
+	// Configurar Swagger
+	s.setupSwagger()
+
 	// Configurar rotas
 	s.setupRoutes()
 
@@ -67,6 +70,7 @@ func (s *Server) Run() error {
 	// Iniciar servidor em uma goroutine
 	go func() {
 		log.Printf("Servidor iniciado na porta %s", s.cfg.Server.Port)
+		log.Printf("Documentação Swagger disponível em http://localhost:%s/swagger/index.html", s.cfg.Server.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Erro ao iniciar servidor: %v", err)
 		}

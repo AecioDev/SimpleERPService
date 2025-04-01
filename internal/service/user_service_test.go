@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
 )
 
 // Mock do UserRepository
@@ -125,9 +127,9 @@ func TestGetUserByID(t *testing.T) {
 	// Arrange
 	mockUserRepo := new(MockUserRepository)
 	mockRoleRepo := new(MockRoleRepository)
-	
+
 	userService := service.NewUserService(mockUserRepo, mockRoleRepo)
-	
+
 	testCases := []struct {
 		name          string
 		userID        uint
@@ -140,11 +142,11 @@ func TestGetUserByID(t *testing.T) {
 			userID: 1,
 			mockSetup: func() {
 				user := &models.User{
-					Base: models.Base{ID: 1},
+					Base:     models.Base{ID: 1},
 					Username: "testuser",
-					Name: "Test User",
-					Email: "test@example.com",
-					RoleID: 1,
+					Name:     "Test User",
+					Email:    "test@example.com",
+					RoleID:   1,
 					Role: models.Role{
 						Base: models.Base{ID: 1},
 						Name: "Admin",
@@ -155,13 +157,13 @@ func TestGetUserByID(t *testing.T) {
 			},
 			expectedError: nil,
 			expectedUser: &models.UserDetailDTO{
-				ID: 1,
+				ID:       1,
 				Username: "testuser",
-				Name: "Test User",
-				Email: "test@example.com",
-				RoleID: 1,
+				Name:     "Test User",
+				Email:    "test@example.com",
+				RoleID:   1,
 				Role: models.RoleDTO{
-					ID: 1,
+					ID:   1,
 					Name: "Admin",
 				},
 				IsActive: true,
@@ -186,20 +188,20 @@ func TestGetUserByID(t *testing.T) {
 			expectedUser:  nil,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Reset mocks
 			mockUserRepo = new(MockUserRepository)
 			mockRoleRepo = new(MockRoleRepository)
 			userService = service.NewUserService(mockUserRepo, mockRoleRepo)
-			
+
 			// Setup mocks
 			tc.mockSetup()
-			
+
 			// Act
 			user, err := userService.GetUserByID(tc.userID)
-			
+
 			// Assert
 			if tc.expectedError != nil {
 				assert.Error(t, err)
@@ -215,7 +217,7 @@ func TestGetUserByID(t *testing.T) {
 				assert.Equal(t, tc.expectedUser.Role.Name, user.Role.Name)
 				assert.Equal(t, tc.expectedUser.IsActive, user.IsActive)
 			}
-			
+
 			// Verify expectations
 			mockUserRepo.AssertExpectations(t)
 			mockRoleRepo.AssertExpectations(t)
