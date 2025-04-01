@@ -5,8 +5,10 @@ import (
 	"strconv"
 
 	"simple-erp-service/internal/models"
+	"simple-erp-service/internal/repository"
 	"simple-erp-service/internal/service"
 	"simple-erp-service/internal/utils"
+	"simple-erp-service/internal/validator"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -19,8 +21,11 @@ type UserHandler struct {
 
 // NewUserHandler cria um novo handler de usuários
 func NewUserHandler(db *gorm.DB) *UserHandler {
+	userRepo := repository.NewUserRepository(db)
+	roleRepo := repository.NewRoleRepository(db)
+
 	return &UserHandler{
-		userService: service.NewUserService(db),
+		userService: service.NewUserService(userRepo, roleRepo),
 	}
 }
 
@@ -73,7 +78,11 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 
 	user, err := h.userService.GetUserByID(uint(id))
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusNotFound, "Usuário não encontrado", err.Error())
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Usuário não encontrado", err.Error())
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Erro ao buscar usuário", err.Error())
+		}
 		return
 	}
 
@@ -101,7 +110,11 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 
 	user, err := h.userService.CreateUser(req)
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao criar usuário", err.Error())
+		if validator.IsValidationError(err) {
+			utils.ValidationErrorResponse(c, "Dados inválidos", err.Error())
+		} else {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao criar usuário", err.Error())
+		}
 		return
 	}
 
@@ -137,7 +150,13 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 
 	user, err := h.userService.UpdateUser(uint(id), req)
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao atualizar usuário", err.Error())
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Usuário não encontrado", err.Error())
+		} else if validator.IsValidationError(err) {
+			utils.ValidationErrorResponse(c, "Dados inválidos", err.Error())
+		} else {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao atualizar usuário", err.Error())
+		}
 		return
 	}
 
@@ -192,7 +211,15 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 	}
 
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao alterar senha", err.Error())
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Usuário não encontrado", err.Error())
+		} else if err == utils.ErrInvalidCredentials {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Senha atual incorreta", err.Error())
+		} else if validator.IsValidationError(err) {
+			utils.ValidationErrorResponse(c, "Dados inválidos", err.Error())
+		} else {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao alterar senha", err.Error())
+		}
 		return
 	}
 
@@ -227,7 +254,11 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	}
 
 	if err := h.userService.DeleteUser(uint(id)); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao excluir usuário", err.Error())
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Usuário não encontrado", err.Error())
+		} else {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao excluir usuário", err.Error())
+		}
 		return
 	}
 

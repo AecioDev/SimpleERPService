@@ -1,37 +1,38 @@
 package service
 
 import (
-	"errors"
-
 	"simple-erp-service/internal/models"
+	"simple-erp-service/internal/repository"
 	"simple-erp-service/internal/utils"
-
-	"gorm.io/gorm"
+	"simple-erp-service/internal/validator"
 )
 
 // RoleService gerencia operações relacionadas a perfis de usuário
 type RoleService struct {
-	db *gorm.DB
+	roleRepo  repository.RoleRepository
+	userRepo  repository.UserRepository
+	permRepo  repository.PermissionRepository
+	validator *validator.RoleValidator
 }
 
 // NewRoleService cria um novo serviço de perfis
-func NewRoleService(db *gorm.DB) *RoleService {
+func NewRoleService(
+	roleRepo repository.RoleRepository,
+	userRepo repository.UserRepository,
+	permRepo repository.PermissionRepository,
+) *RoleService {
 	return &RoleService{
-		db: db,
+		roleRepo:  roleRepo,
+		userRepo:  userRepo,
+		permRepo:  permRepo,
+		validator: validator.NewRoleValidator(roleRepo, userRepo, permRepo),
 	}
 }
 
 // GetRoles retorna uma lista paginada de perfis
 func (s *RoleService) GetRoles(pagination *utils.Pagination) ([]models.RoleDTO, error) {
-	var roles []models.Role
-
-	query := s.db.Model(&models.Role{})
-	query, err := utils.Paginate(&models.Role{}, pagination, query)
+	roles, err := s.roleRepo.FindAll(pagination)
 	if err != nil {
-		return nil, err
-	}
-
-	if err := query.Find(&roles).Error; err != nil {
 		return nil, err
 	}
 
@@ -46,9 +47,12 @@ func (s *RoleService) GetRoles(pagination *utils.Pagination) ([]models.RoleDTO, 
 
 // GetRoleByID busca um perfil pelo ID
 func (s *RoleService) GetRoleByID(id uint) (*models.RoleDetailDTO, error) {
-	var role models.Role
-	if err := s.db.Preload("Permissions").First(&role, id).Error; err != nil {
+	role, err := s.roleRepo.FindByIDWithPermissions(id)
+	if err != nil {
 		return nil, err
+	}
+	if role == nil {
+		return nil, utils.ErrNotFound
 	}
 
 	// Converter para DTO
@@ -58,11 +62,9 @@ func (s *RoleService) GetRoleByID(id uint) (*models.RoleDetailDTO, error) {
 
 // CreateRole cria um novo perfil
 func (s *RoleService) CreateRole(req models.CreateRoleRequest) (*models.RoleDTO, error) {
-	// Verificar se o nome já existe
-	var count int64
-	s.db.Model(&models.Role{}).Where("name = ?", req.Name).Count(&count)
-	if count > 0 {
-		return nil, errors.New("nome de perfil já está em uso")
+	// Validar dados
+	if err := s.validator.ValidateForCreation(req); err != nil {
+		return nil, err
 	}
 
 	// Criar perfil
@@ -71,7 +73,7 @@ func (s *RoleService) CreateRole(req models.CreateRoleRequest) (*models.RoleDTO,
 		Description: req.Description,
 	}
 
-	if err := s.db.Create(&role).Error; err != nil {
+	if err := s.roleRepo.Create(&role); err != nil {
 		return nil, err
 	}
 
@@ -82,19 +84,18 @@ func (s *RoleService) CreateRole(req models.CreateRoleRequest) (*models.RoleDTO,
 
 // UpdateRole atualiza um perfil existente
 func (s *RoleService) UpdateRole(id uint, req models.UpdateRoleRequest) (*models.RoleDTO, error) {
-	// Buscar perfil
-	var role models.Role
-	if err := s.db.First(&role, id).Error; err != nil {
+	// Validar dados
+	if err := s.validator.ValidateForUpdate(id, req); err != nil {
 		return nil, err
 	}
 
-	// Verificar se o nome já está em uso por outro perfil
-	if req.Name != "" && req.Name != role.Name {
-		var count int64
-		s.db.Model(&models.Role{}).Where("name = ? AND id != ?", req.Name, id).Count(&count)
-		if count > 0 {
-			return nil, errors.New("nome de perfil já está em uso")
-		}
+	// Buscar perfil
+	role, err := s.roleRepo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if role == nil {
+		return nil, utils.ErrNotFound
 	}
 
 	// Atualizar campos
@@ -106,7 +107,7 @@ func (s *RoleService) UpdateRole(id uint, req models.UpdateRoleRequest) (*models
 	}
 
 	// Salvar alterações
-	if err := s.db.Save(&role).Error; err != nil {
+	if err := s.roleRepo.Update(role); err != nil {
 		return nil, err
 	}
 
@@ -117,21 +118,19 @@ func (s *RoleService) UpdateRole(id uint, req models.UpdateRoleRequest) (*models
 
 // DeleteRole exclui um perfil
 func (s *RoleService) DeleteRole(id uint) error {
-	// Verificar se o perfil está sendo usado por usuários
-	var count int64
-	s.db.Model(&models.User{}).Where("role_id = ?", id).Count(&count)
-	if count > 0 {
-		return errors.New("não é possível excluir um perfil que está sendo usado por usuários")
+	// Validar se o perfil pode ser excluído
+	if err := s.validator.ValidateForDeletion(id); err != nil {
+		return err
 	}
 
 	// Excluir perfil
-	return s.db.Delete(&models.Role{}, id).Error
+	return s.roleRepo.Delete(id)
 }
 
 // GetPermissions retorna todas as permissões
 func (s *RoleService) GetPermissions() ([]models.PermissionDTO, error) {
-	var permissions []models.Permission
-	if err := s.db.Find(&permissions).Error; err != nil {
+	permissions, err := s.permRepo.FindAll()
+	if err != nil {
 		return nil, err
 	}
 
@@ -146,15 +145,9 @@ func (s *RoleService) GetPermissions() ([]models.PermissionDTO, error) {
 
 // GetPermissionsByModule retorna permissões agrupadas por módulo
 func (s *RoleService) GetPermissionsByModule() ([]models.PermissionsByModuleDTO, error) {
-	var permissions []models.Permission
-	if err := s.db.Find(&permissions).Error; err != nil {
+	moduleMap, err := s.permRepo.GroupByModule()
+	if err != nil {
 		return nil, err
-	}
-
-	// Agrupar permissões por módulo
-	moduleMap := make(map[string][]models.Permission)
-	for _, perm := range permissions {
-		moduleMap[perm.Module] = append(moduleMap[perm.Module], perm)
 	}
 
 	// Converter mapa para slice
@@ -177,34 +170,32 @@ func (s *RoleService) GetPermissionsByModule() ([]models.PermissionsByModuleDTO,
 
 // UpdateRolePermissions atualiza as permissões de um perfil
 func (s *RoleService) UpdateRolePermissions(id uint, permissionIDs []uint) (*models.RoleDetailDTO, error) {
+	// Validar dados
+	if err := s.validator.ValidatePermissionUpdate(id, permissionIDs); err != nil {
+		return nil, err
+	}
+
 	// Buscar perfil
-	var role models.Role
-	if err := s.db.First(&role, id).Error; err != nil {
+	role, err := s.roleRepo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if role == nil {
+		return nil, utils.ErrNotFound
+	}
+
+	// Atualizar permissões
+	if err := s.roleRepo.UpdatePermissions(role, permissionIDs); err != nil {
 		return nil, err
 	}
 
-	// Buscar permissões
-	var permissions []models.Permission
-	if err := s.db.Where("id IN ?", permissionIDs).Find(&permissions).Error; err != nil {
-		return nil, err
-	}
-
-	// Verificar se todas as permissões solicitadas existem
-	if len(permissions) != len(permissionIDs) {
-		return nil, errors.New("uma ou mais permissões não existem")
-	}
-
-	// Atualizar permissões do perfil
-	if err := s.db.Model(&role).Association("Permissions").Replace(&permissions); err != nil {
-		return nil, err
-	}
-
-	// Recarregar perfil com permissões
-	if err := s.db.Preload("Permissions").First(&role, id).Error; err != nil {
+	// Buscar perfil atualizado com permissões
+	updatedRole, err := s.roleRepo.FindByIDWithPermissions(id)
+	if err != nil {
 		return nil, err
 	}
 
 	// Converter para DTO
-	roleDetailDTO := role.ToDetailDTO()
+	roleDetailDTO := updatedRole.ToDetailDTO()
 	return &roleDetailDTO, nil
 }

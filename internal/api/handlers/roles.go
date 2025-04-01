@@ -5,8 +5,10 @@ import (
 	"strconv"
 
 	"simple-erp-service/internal/models"
+	"simple-erp-service/internal/repository"
 	"simple-erp-service/internal/service"
 	"simple-erp-service/internal/utils"
+	"simple-erp-service/internal/validator"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -19,8 +21,12 @@ type RoleHandler struct {
 
 // NewRoleHandler cria um novo handler de perfis
 func NewRoleHandler(db *gorm.DB) *RoleHandler {
+	roleRepo := repository.NewRoleRepository(db)
+	userRepo := repository.NewUserRepository(db)
+	permRepo := repository.NewPermissionRepository(db)
+
 	return &RoleHandler{
-		roleService: service.NewRoleService(db),
+		roleService: service.NewRoleService(roleRepo, userRepo, permRepo),
 	}
 }
 
@@ -73,7 +79,11 @@ func (h *RoleHandler) GetRole(c *gin.Context) {
 
 	role, err := h.roleService.GetRoleByID(uint(id))
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusNotFound, "Perfil não encontrado", err.Error())
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Perfil não encontrado", err.Error())
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Erro ao buscar perfil", err.Error())
+		}
 		return
 	}
 
@@ -101,7 +111,11 @@ func (h *RoleHandler) CreateRole(c *gin.Context) {
 
 	role, err := h.roleService.CreateRole(req)
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao criar perfil", err.Error())
+		if validator.IsValidationError(err) {
+			utils.ValidationErrorResponse(c, "Dados inválidos", err.Error())
+		} else {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao criar perfil", err.Error())
+		}
 		return
 	}
 
@@ -137,7 +151,13 @@ func (h *RoleHandler) UpdateRole(c *gin.Context) {
 
 	role, err := h.roleService.UpdateRole(uint(id), req)
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao atualizar perfil", err.Error())
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Perfil não encontrado", err.Error())
+		} else if validator.IsValidationError(err) {
+			utils.ValidationErrorResponse(c, "Dados inválidos", err.Error())
+		} else {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao atualizar perfil", err.Error())
+		}
 		return
 	}
 
@@ -165,7 +185,13 @@ func (h *RoleHandler) DeleteRole(c *gin.Context) {
 	}
 
 	if err := h.roleService.DeleteRole(uint(id)); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao excluir perfil", err.Error())
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Perfil não encontrado", err.Error())
+		} else if validator.IsValidationError(err) {
+			utils.ValidationErrorResponse(c, "Dados inválidos", err.Error())
+		} else {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao excluir perfil", err.Error())
+		}
 		return
 	}
 
@@ -243,7 +269,13 @@ func (h *RoleHandler) UpdateRolePermissions(c *gin.Context) {
 
 	role, err := h.roleService.UpdateRolePermissions(uint(id), req.PermissionIDs)
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao atualizar permissões", err.Error())
+		if err == utils.ErrNotFound {
+			utils.ErrorResponse(c, http.StatusNotFound, "Perfil não encontrado", err.Error())
+		} else if validator.IsValidationError(err) {
+			utils.ValidationErrorResponse(c, "Dados inválidos", err.Error())
+		} else {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Erro ao atualizar permissões", err.Error())
+		}
 		return
 	}
 
