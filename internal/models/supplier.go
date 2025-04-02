@@ -29,3 +29,34 @@ type Supplier struct {
 func (Supplier) TableName() string {
 	return "suppliers"
 }
+
+// CreateSupplierRequest representa os dados para criar um novo fornecedor
+type CreateSupplierRequest struct {
+	Name        string `json:"name" binding:"required"`
+	Document    string `json:"document" binding:"required"`
+	Email       string `json:"email"`
+	Phone       string `json:"phone"`
+	ContactName string `json:"contact_name"`
+	Address     string `json:"address"`
+	City        string `json:"city"`
+	State       string `json:"state"`
+	ZipCode     string `json:"zip_code"`
+	BankInfo    string `json:"bank_info"`
+	Notes       string `json:"notes"`
+}
+
+// UpdateSupplierRequest representa os dados para atualizar um fornecedor
+type UpdateSupplierRequest struct {
+	Name        string `json:"name"`
+	Document    string `json:"document"`
+	Email       string `json:"email"`
+	Phone       string `json:"phone"`
+	ContactName string `json:"contact_name"`
+	Address     string `json:"address"`
+	City        string `json:"city"`
+	State       string `json:"state"`
+	ZipCode     string `json:"zip_code"`
+	BankInfo    string `json:"bank_info"`
+	Notes       string `json:"notes"`
+	IsActive    *bool  `json:"is_active"`
+}

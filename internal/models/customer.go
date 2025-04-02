@@ -28,3 +28,32 @@ type Customer struct {
 func (Customer) TableName() string {
 	return "customers"
 }
+
+// CreateCustomerRequest representa os dados para criar um novo cliente
+type CreateCustomerRequest struct {
+	Name        string `json:"name" binding:"required"`
+	Document    string `json:"document" binding:"required"`
+	Email       string `json:"email"`
+	Phone       string `json:"phone"`
+	ContactName string `json:"contact_name"`
+	Address     string `json:"address"`
+	City        string `json:"city"`
+	State       string `json:"state"`
+	ZipCode     string `json:"zip_code"`
+	Notes       string `json:"notes"`
+}
+
+// UpdateCustomerRequest representa os dados para atualizar um cliente
+type UpdateCustomerRequest struct {
+	Name        string `json:"name"`
+	Document    string `json:"document"`
+	Email       string `json:"email"`
+	Phone       string `json:"phone"`
+	ContactName string `json:"contact_name"`
+	Address     string `json:"address"`
+	City        string `json:"city"`
+	State       string `json:"state"`
+	ZipCode     string `json:"zip_code"`
+	Notes       string `json:"notes"`
+	IsActive    *bool  `json:"is_active"`
+}

@@ -105,7 +105,7 @@ func (s *Server) setupRoutes() {
 	routes.SetupProductsRoutes(api, s.db)
 	routes.SetupInventoryRoutes(api, s.db)
 	routes.SetupCustomersRoutes(api, s.db)
-	routes.SetupSuppliersRoutes(api, s.db)
+	routes.SetupSupplierRoutes(api, s.db)
 	routes.SetupSalesRoutes(api, s.db)
 	routes.SetupPurchasesRoutes(api, s.db)
 	routes.SetupFinancialRoutes(api, s.db)
