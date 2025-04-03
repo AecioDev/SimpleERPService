@@ -3,7 +3,7 @@ package validator
 import (
 	"simple-erp-service/internal/models"
 	"simple-erp-service/internal/repository"
-	"strings"
+	"simple-erp-service/internal/utils"
 )
 
 // SupplierValidator valida regras de negócio relacionadas a fornecedores
@@ -23,12 +23,10 @@ func (v *SupplierValidator) ValidateForCreation(req models.CreateSupplierRequest
 	var errors ValidationErrors
 
 	// Verificar se o documento já existe
-	if req.Document != "" {
+	if req.DocumentNumber != "" {
 		// Remover caracteres não numéricos para comparação
-		document := strings.ReplaceAll(req.Document, ".", "")
-		document = strings.ReplaceAll(document, "-", "")
-		document = strings.ReplaceAll(document, "/", "")
-		
+		document := utils.RemoveMask(req.DocumentNumber)
+
 		exists, err := v.supplierRepo.ExistsByDocument(document)
 		if err != nil {
 			return err
@@ -38,20 +36,12 @@ func (v *SupplierValidator) ValidateForCreation(req models.CreateSupplierRequest
 		}
 	}
 
-	// Verificar se o email já existe (se fornecido)
-	if req.Email != "" {
-		exists, err := v.supplierRepo.ExistsByEmail(req.Email)
-		if err != nil {
-			return err
-		}
-		if exists {
-			errors.AddError("email", "email já está em uso")
-		}
+	// Validar nome (se fornecido)
+	if req.FirstName != "" && len(req.FirstName) < 3 {
+		errors.AddError("first_name", "o primeiro nome deve ter pelo menos 3 caracteres")
 	}
-
-	// Validar nome
-	if len(req.Name) < 3 {
-		errors.AddError("name", "nome deve ter pelo menos 3 caracteres")
+	if req.LastName != "" && len(req.LastName) < 3 {
+		errors.AddError("last_name", "o sobrenome deve ter pelo menos 3 caracteres")
 	}
 
 	if errors.HasErrors() {
@@ -75,12 +65,10 @@ func (v *SupplierValidator) ValidateForUpdate(id uint, req models.UpdateSupplier
 	}
 
 	// Verificar se o documento já está em uso por outro fornecedor (se fornecido)
-	if req.Document != "" && req.Document != supplier.Document {
+	if req.DocumentNumber != "" && req.DocumentNumber != supplier.DocumentNumber {
 		// Remover caracteres não numéricos para comparação
-		document := strings.ReplaceAll(req.Document, ".", "")
-		document = strings.ReplaceAll(document, "-", "")
-		document = strings.ReplaceAll(document, "/", "")
-		
+		document := utils.RemoveMask(req.DocumentNumber)
+
 		exists, err := v.supplierRepo.ExistsByDocumentExcept(document, id)
 		if err != nil {
 			return err
@@ -90,20 +78,12 @@ func (v *SupplierValidator) ValidateForUpdate(id uint, req models.UpdateSupplier
 		}
 	}
 
-	// Verificar se o email já está em uso por outro fornecedor (se fornecido)
-	if req.Email != "" && req.Email != supplier.Email {
-		exists, err := v.supplierRepo.ExistsByEmailExcept(req.Email, id)
-		if err != nil {
-			return err
-		}
-		if exists {
-			errors.AddError("email", "email já está em uso")
-		}
-	}
-
 	// Validar nome (se fornecido)
-	if req.Name != "" && len(req.Name) < 3 {
-		errors.AddError("name", "nome deve ter pelo menos 3 caracteres")
+	if req.FirstName != "" && len(req.FirstName) < 3 {
+		errors.AddError("first_name", "o primeiro nome deve ter pelo menos 3 caracteres")
+	}
+	if req.LastName != "" && len(req.LastName) < 3 {
+		errors.AddError("last_name", "o sobrenome deve ter pelo menos 3 caracteres")
 	}
 
 	if errors.HasErrors() {

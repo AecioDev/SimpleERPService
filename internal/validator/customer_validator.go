@@ -3,7 +3,7 @@ package validator
 import (
 	"simple-erp-service/internal/models"
 	"simple-erp-service/internal/repository"
-	"strings"
+	"simple-erp-service/internal/utils"
 )
 
 // CustomerValidator valida regras de negócio relacionadas a clientes
@@ -23,12 +23,10 @@ func (v *CustomerValidator) ValidateForCreation(req models.CreateCustomerRequest
 	var errors ValidationErrors
 
 	// Verificar se o documento já existe
-	if req.Document != "" {
+	if req.DocumentNumber != "" {
 		// Remover caracteres não numéricos para comparação
-		document := strings.ReplaceAll(req.Document, ".", "")
-		document = strings.ReplaceAll(document, "-", "")
-		document = strings.ReplaceAll(document, "/", "")
-		
+		document := utils.RemoveMask(req.DocumentNumber)
+
 		exists, err := v.customerRepo.ExistsByDocument(document)
 		if err != nil {
 			return err
@@ -38,20 +36,12 @@ func (v *CustomerValidator) ValidateForCreation(req models.CreateCustomerRequest
 		}
 	}
 
-	// Verificar se o email já existe (se fornecido)
-	if req.Email != "" {
-		exists, err := v.customerRepo.ExistsByEmail(req.Email)
-		if err != nil {
-			return err
-		}
-		if exists {
-			errors.AddError("email", "email já está em uso")
-		}
+	// Validar nome (se fornecido)
+	if req.FirstName != "" && len(req.FirstName) < 3 {
+		errors.AddError("first_name", "o primeiro nome deve ter pelo menos 3 caracteres")
 	}
-
-	// Validar nome
-	if len(req.Name) < 3 {
-		errors.AddError("name", "nome deve ter pelo menos 3 caracteres")
+	if req.LastName != "" && len(req.LastName) < 3 {
+		errors.AddError("last_name", "o sobrenome deve ter pelo menos 3 caracteres")
 	}
 
 	if errors.HasErrors() {
@@ -75,35 +65,25 @@ func (v *CustomerValidator) ValidateForUpdate(id uint, req models.UpdateCustomer
 	}
 
 	// Verificar se o documento já está em uso por outro cliente (se fornecido)
-	if req.Document != "" && req.Document != customer.Document {
+	if req.DocumentNumber != "" && req.DocumentNumber != customer.DocumentNumber {
 		// Remover caracteres não numéricos para comparação
-		document := strings.ReplaceAll(req.Document, ".", "")
-		document = strings.ReplaceAll(document, "-", "")
-		document = strings.ReplaceAll(document, "/", "")
-		
+		document := utils.RemoveMask(req.DocumentNumber)
+
 		exists, err := v.customerRepo.ExistsByDocumentExcept(document, id)
 		if err != nil {
 			return err
 		}
 		if exists {
-			errors.AddError("document", "documento já está em uso")
-		}
-	}
-
-	// Verificar se o email já está em uso por outro cliente (se fornecido)
-	if req.Email != "" && req.Email != customer.Email {
-		exists, err := v.customerRepo.ExistsByEmailExcept(req.Email, id)
-		if err != nil {
-			return err
-		}
-		if exists {
-			errors.AddError("email", "email já está em uso")
+			errors.AddError("document_number", "documento já está em uso")
 		}
 	}
 
 	// Validar nome (se fornecido)
-	if req.Name != "" && len(req.Name) < 3 {
-		errors.AddError("name", "nome deve ter pelo menos 3 caracteres")
+	if req.FirstName != "" && len(req.FirstName) < 3 {
+		errors.AddError("first_name", "o primeiro nome deve ter pelo menos 3 caracteres")
+	}
+	if req.LastName != "" && len(req.LastName) < 3 {
+		errors.AddError("last_name", "o sobrenome deve ter pelo menos 3 caracteres")
 	}
 
 	if errors.HasErrors() {

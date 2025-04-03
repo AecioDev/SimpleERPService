@@ -9,6 +9,9 @@ type PaymentMethod struct {
 	Name        string `gorm:"size:50;not null;unique" json:"name"`
 	Description string `json:"description"`
 	IsActive    bool   `gorm:"default:true" json:"is_active"`
+
+	// Relacionamento com pagamentos
+	Payments []Payment `gorm:"foreignKey:PaymentMethodID" json:"-"`
 }
 
 // TableName especifica o nome da tabela

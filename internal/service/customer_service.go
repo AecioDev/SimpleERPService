@@ -28,16 +28,16 @@ func (s *CustomerService) GetCustomers(pagination *utils.Pagination) (*models.Cu
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Converter para DTOs
 	customerDTOs := make([]models.CustomerDTO, 0, len(customers))
 	for _, customer := range customers {
 		customerDTOs = append(customerDTOs, customer.ToDTO())
 	}
-	
+
 	return &models.CustomerListDTO{
-		Data:       customerDTOs,
-		Pagination: models.ToPaginationDTO(pagination),
+		Customer:   customerDTOs,
+		Pagination: *models.ToPaginationDTO(pagination),
 	}, nil
 }
 
@@ -50,7 +50,7 @@ func (s *CustomerService) GetCustomerByID(id uint) (*models.CustomerDetailDTO, e
 	if customer == nil {
 		return nil, utils.ErrNotFound
 	}
-	
+
 	// Converter para DTO
 	customerDetailDTO := customer.ToDetailDTO()
 	return &customerDetailDTO, nil
@@ -62,31 +62,28 @@ func (s *CustomerService) CreateCustomer(req models.CreateCustomerRequest) (*mod
 	if err := s.validator.ValidateForCreation(req); err != nil {
 		return nil, err
 	}
-	
+
 	// Formatar documento (remover caracteres não numéricos)
-	document := strings.ReplaceAll(req.Document, ".", "")
+	document := strings.ReplaceAll(req.DocumentNumber, ".", "")
 	document = strings.ReplaceAll(document, "-", "")
 	document = strings.ReplaceAll(document, "/", "")
-	
+
 	// Criar cliente
 	customer := models.Customer{
-		Name:        req.Name,
-		Document:    document,
-		Email:       req.Email,
-		Phone:       req.Phone,
-		ContactName: req.ContactName,
-		Address:     req.Address,
-		City:        req.City,
-		State:       req.State,
-		ZipCode:     req.ZipCode,
-		Notes:       req.Notes,
-		IsActive:    true, // Por padrão, clientes são criados ativos
+		FirstName:      req.FirstName,
+		LastName:       req.LastName,
+		PersonType:     req.PersonType,
+		DocumentNumber: document,
+		CompanyName:    req.CompanyName,
+		Notes:          req.Notes,
+		CreatedByID:    &req.CreatedByID,
+		IsActive:       true, // Por padrão, clientes são criados ativos
 	}
-	
+
 	if err := s.customerRepo.Create(&customer); err != nil {
 		return nil, err
 	}
-	
+
 	// Converter para DTO
 	customerDTO := customer.ToDTO()
 	return &customerDTO, nil
@@ -98,7 +95,7 @@ func (s *CustomerService) UpdateCustomer(id uint, req models.UpdateCustomerReque
 	if err := s.validator.ValidateForUpdate(id, req); err != nil {
 		return nil, err
 	}
-	
+
 	// Buscar cliente
 	customer, err := s.customerRepo.FindByID(id)
 	if err != nil {
@@ -107,51 +104,49 @@ func (s *CustomerService) UpdateCustomer(id uint, req models.UpdateCustomerReque
 	if customer == nil {
 		return nil, utils.ErrNotFound
 	}
-	
-	// Atualizar campos
-	if req.Name != "" {
-		customer.Name = req.Name
-	}
-	if req.Document != "" {
-		// Formatar documento (remover caracteres não numéricos)
-		document := strings.ReplaceAll(req.Document, ".", "")
-		document = strings.ReplaceAll(document, "-", "")
-		document = strings.ReplaceAll(document, "/", "")
-		customer.Document = document
-	}
-	if req.Email != "" {
-		customer.Email = req.Email
-	}
-	if req.Phone != "" {
-		customer.Phone = req.Phone
-	}
-	if req.ContactName != "" {
-		customer.ContactName = req.ContactName
-	}
-	if req.Address != "" {
-		customer.Address = req.Address
-	}
-	if req.City != "" {
-		customer.City = req.City
-	}
-	if req.State != "" {
-		customer.State = req.State
-	}
-	if req.ZipCode != "" {
-		customer.ZipCode = req.ZipCode
-	}
-	if req.Notes != "" {
-		customer.Notes = req.Notes
-	}
-	if req.IsActive != nil {
-		customer.IsActive = *req.IsActive
-	}
-	
+
+	// Atualizar campos básicos
+	customer.FirstName = req.FirstName
+	customer.LastName = req.LastName
+	customer.CompanyName = req.CompanyName
+	customer.IsActive = req.IsActive
+	customer.Notes = req.Notes
+
+	// Atualizar e formatar o DocumentNumber (removendo caracteres especiais)
+	document := strings.NewReplacer(".", "", "-", "", "/", "").Replace(req.DocumentNumber)
+	customer.DocumentNumber = document
+
+	// TODO Implementar os Métodos
+	//// Atualizar Relacionamentos (se IDs foram enviados)
+	// if len(req.DocumentsIDs) > 0 {
+	// 	documents, err := s.documentRepo.FindByIDs(req.DocumentsIDs)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	customer.Documents = documents
+	// }
+
+	// if len(req.AdressesIDs) > 0 {
+	// 	addresses, err := s.addressRepo.FindByIDs(req.AdressesIDs)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	customer.Addresses = addresses
+	// }
+
+	// if len(req.ContactsIDs) > 0 {
+	// 	contacts, err := s.contactRepo.FindByIDs(req.ContactsIDs)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	customer.Contacts = contacts
+	// }
+
 	// Salvar alterações
 	if err := s.customerRepo.Update(customer); err != nil {
 		return nil, err
 	}
-	
+
 	// Converter para DTO
 	customerDTO := customer.ToDTO()
 	return &customerDTO, nil
@@ -167,7 +162,7 @@ func (s *CustomerService) DeleteCustomer(id uint) error {
 	if customer == nil {
 		return utils.ErrNotFound
 	}
-	
+
 	// Excluir cliente
 	return s.customerRepo.Delete(id)
 }
