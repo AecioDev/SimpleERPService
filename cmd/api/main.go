@@ -16,13 +16,13 @@ func main() {
 	}
 
 	// Inicializar banco de dados
-	db, err := db.InitDB(cfg)
+	database, err := db.InitDB(cfg)
 	if err != nil {
 		log.Fatalf("Erro ao conectar ao banco de dados: %v", err)
 	}
 
 	// Inicializar e executar o servidor
-	s := server.NewServer(cfg, db)
+	s := server.NewServer(cfg, database)
 	if err := s.Run(); err != nil {
 		log.Fatalf("Erro ao iniciar o servidor: %v", err)
 	}

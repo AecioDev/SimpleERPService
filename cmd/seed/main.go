@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"simple-erp-service/config"
-	"simple-erp-service/internal/repository/db"
+	"simple-erp-service/internal/repository/seeders"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -19,7 +19,7 @@ func main() {
 	}
 
 	// Conectar ao banco de dados
-	database, err := gorm.Open(postgres.Open(cfg.Database.DSN()), &gorm.Config{
+	db, err := gorm.Open(postgres.Open(cfg.Database.DSN()), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
@@ -27,9 +27,6 @@ func main() {
 	}
 
 	// Executar apenas o seed
-	if err := db.SeedDB(database); err != nil {
-		log.Fatalf("Erro ao executar seed: %v", err)
-	}
-
+	seeders.RunAll(db)
 	log.Println("Seed concluído com sucesso!")
 }
