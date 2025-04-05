@@ -9,6 +9,12 @@ import (
 type Document struct {
 	gorm.Model
 
+	CustomerID *uint     `gorm:"index" json:"customer_id,omitempty"`
+	Customer   *Customer `gorm:"foreignKey:CustomerID" json:"-"`
+
+	SupplierID *uint     `gorm:"index" json:"supplier_id,omitempty"`
+	Supplier   *Supplier `gorm:"foreignKey:SupplierID" json:"-"`
+
 	DocumentType         string     `gorm:"not null" json:"document_type"`          // Tipo de Documento: CPF, RG, CNPJ, IE, IM, CNH etc.
 	DocumentOwner        string     `gorm:"not null" json:"document_owner"`         // Cliente ou Fornecedor etc.
 	DocumentNumber       string     `gorm:"unique;not null" json:"document_number"` // Número do Documento

@@ -53,6 +53,12 @@ type Address struct {
 	ZipCode      string `gorm:"not null;size:8" json:"zip_code"` // CEP com 8 dígitos
 	CityID       uint   `gorm:"not null" json:"city_id"`         // Relacionamento com City
 	City         City   `gorm:"foreignKey:CityID" json:"city"`   // Associação com a cidade
+
+	CustomerID *uint     `gorm:"index" json:"customer_id,omitempty"`
+	Customer   *Customer `gorm:"foreignKey:CustomerID" json:"-"`
+
+	SupplierID *uint     `gorm:"index" json:"supplier_id,omitempty"`
+	Supplier   *Supplier `gorm:"foreignKey:SupplierID" json:"-"`
 }
 
 // TableName especifica o nome da tabela
