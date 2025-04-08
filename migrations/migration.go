@@ -13,21 +13,37 @@ func MigrateDB(db *gorm.DB) error {
 
 	// Lista de todos os modelos para migração
 	models := []interface{}{
-		&models.Role{},
-		&models.Permission{},
+		&models.Account{},
+
 		&models.User{},
-		&models.ProductCategory{},
-		&models.MeasurementUnit{},
-		&models.Product{},
-		&models.InventoryMovement{},
+		&models.Permission{},
+		&models.Role{},
+
+		&models.Country{},
+		&models.State{},
+		&models.City{},
+		&models.Address{},
+
+		&models.Contact{},
+		&models.Document{},
+
+		&models.SaleItem{},
+		&models.Sale{},
+
+		&models.PurchaseItem{},
+		&models.Purchase{},
+
+		&models.Transaction{},
+		&models.PaymentMethod{},
+		&models.Payment{},
+
 		&models.Customer{},
 		&models.Supplier{},
-		&models.PaymentMethod{},
-		&models.Sale{},
-		&models.SaleItem{},
-		&models.Purchase{},
-		&models.PurchaseItem{},
-		&models.FinancialTransaction{},
+
+		&models.InventoryMovement{},
+		&models.MeasurementUnit{},
+		&models.ProductCategory{},
+		&models.Product{},
 		&models.SystemLog{},
 	}
 

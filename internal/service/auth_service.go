@@ -51,7 +51,13 @@ func (s *AuthService) Login(username, password string) (*LoginResponse, error) {
 		return nil, errors.New("usuário inativo")
 	}
 
-	// Verificar senha
+	// senhash, err := utils.HashPassword(password)
+	// fmt.Printf("Senha hash: %s\n", senhash)
+
+	// // Verificar senha
+	// fmt.Printf("Senha: %s, SenhaBD: %s", password, user.PasswordHash)
+
+	// Verifica se a senha informada corresponde ao hash armazenado
 	if !utils.CheckPasswordHash(password, user.PasswordHash) {
 		return nil, errors.New("senha incorreta")
 	}
