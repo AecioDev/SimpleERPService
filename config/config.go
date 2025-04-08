@@ -26,12 +26,13 @@ type ServerConfig struct {
 
 // DatabaseConfig armazena configurações do banco de dados
 type DatabaseConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	DBName   string
-	SSLMode  string
+	Host         string
+	Port         string
+	User         string
+	Password     string
+	DBName       string
+	SSLMode      string
+	DatabaseLink string
 }
 
 // JWTConfig armazena configurações do JWT
@@ -59,6 +60,7 @@ func Load() (*Config, error) {
 	dbPassword := getEnv("DB_PASSWORD", "postgres")
 	dbName := getEnv("DB_NAME", "erp_system")
 	dbSSLMode := getEnv("DB_SSLMODE", "disable")
+	dbLink := getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/erp_system?sslmode=disable")
 
 	// Configurações do JWT
 	jwtSecret := getEnv("JWT_SECRET", "your-secret-key")
@@ -73,12 +75,13 @@ func Load() (*Config, error) {
 			IdleTimeout:  time.Duration(idleTimeout) * time.Second,
 		},
 		Database: DatabaseConfig{
-			Host:     dbHost,
-			Port:     dbPort,
-			User:     dbUser,
-			Password: dbPassword,
-			DBName:   dbName,
-			SSLMode:  dbSSLMode,
+			Host:         dbHost,
+			Port:         dbPort,
+			User:         dbUser,
+			Password:     dbPassword,
+			DBName:       dbName,
+			SSLMode:      dbSSLMode,
+			DatabaseLink: dbLink,
 		},
 		JWT: JWTConfig{
 			Secret:          jwtSecret,
@@ -90,8 +93,10 @@ func Load() (*Config, error) {
 
 // DSN retorna a string de conexão com o banco de dados
 func (c *DatabaseConfig) DSN() string {
-	fmt.Printf("\nhost=%s port=%s user=%s password=%s dbname=%s sslmode=%s\n",
-		c.Host, c.Port, c.User, c.Password, c.DBName, c.SSLMode)
+
+	if c.DatabaseLink != "" { // Se o link do banco de dados estiver definido, use-o
+		return c.DatabaseLink
+	}
 
 	return fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
