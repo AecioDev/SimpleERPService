@@ -34,7 +34,7 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 
 	if strings.ToLower(strings.TrimSpace(resposta)) == "s" {
 		log.Println("Rodando seeders...")
-		seeders.SeedRolesPermissions(db)
+		seeders.RunAll(db)
 		log.Println("Seeders concluídos com sucesso!")
 	} else {
 		log.Println("Seeders ignorados.")
