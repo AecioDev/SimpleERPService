@@ -10,7 +10,7 @@ import (
 
 func SeedCountries(db *gorm.DB) {
 	countries := []models.Country{
-		{Name: "Brasil", BacenCode: 1058, PhoneCode: 55},
+		{Name: "Brasil", BacenCode: "1058", PhoneCode: "55"},
 	}
 
 	for _, country := range countries {

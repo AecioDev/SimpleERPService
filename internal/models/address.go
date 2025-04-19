@@ -6,8 +6,8 @@ type Country struct {
 	gorm.Model
 
 	Name      string `gorm:"not null;unique" json:"name"`
-	BacenCode int    `gorm:"not null;unique" json:"bacen_code"` // Código Bacen do país
-	PhoneCode int    `gorm:"not null" json:"phone_code"`        // Código telefônico internacional
+	BacenCode string `gorm:"not null;unique" json:"bacen_code"` // Código Bacen do país
+	PhoneCode string `gorm:"not null" json:"phone_code"`        // Código telefônico internacional
 }
 
 // TableName especifica o nome da tabela
@@ -20,7 +20,7 @@ type State struct {
 
 	Name      string  `gorm:"not null;unique" json:"name"`
 	UF        string  `gorm:"size:2;not null;unique" json:"uf"`    // Sigla do Estado (ex: SP, RJ)
-	IBGECode  int     `gorm:"not null;unique" json:"ibge_code"`    // Código IBGE da UF
+	IBGECode  string  `gorm:"not null;unique" json:"ibge_code"`    // Código IBGE da UF
 	CountryID uint    `gorm:"not null" json:"country_id"`          // Relacionamento com Country
 	Country   Country `gorm:"foreignKey:CountryID" json:"country"` // Associação com o país
 }
@@ -34,7 +34,7 @@ type City struct {
 	gorm.Model
 
 	Name     string `gorm:"not null" json:"name"`
-	IBGECode int    `gorm:"not null;unique" json:"ibge_code"` // Código IBGE da cidade
+	IBGECode string `gorm:"not null;unique" json:"ibge_code"` // Código IBGE da cidade
 	StateID  uint   `gorm:"not null" json:"state_id"`         // Relacionamento com State
 	State    State  `gorm:"foreignKey:StateID" json:"state"`  // Associação com o estado
 }

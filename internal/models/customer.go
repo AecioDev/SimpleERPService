@@ -67,9 +67,4 @@ type UpdateCustomerRequest struct {
 	CompanyName    string `json:"company_name" binding:"omitempty"`
 	IsActive       bool   `json:"is_active" binding:"required"`
 	Notes          string `json:"notes"`
-
-	// Relacionamentos O Front manda uma Lista de IDs válidos para cada entidade relacionada.
-	DocumentsIDs []uint `json:"documents_ids" binding:"omitempty"`
-	AdressesIDs  []uint `json:"adresses_ids" binding:"omitempty"`
-	ContactsIDs  []uint `json:"contacts_ids" binding:"omitempty"`
 }

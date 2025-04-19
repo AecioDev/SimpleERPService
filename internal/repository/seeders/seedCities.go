@@ -15,9 +15,9 @@ func SeedCities(db *gorm.DB) {
 	}
 
 	cities := []models.City{
-		{Name: "São Paulo", IBGECode: 3550308, StateID: sp.ID},
-		{Name: "Campinas", IBGECode: 3509502, StateID: sp.ID},
-		{Name: "Santos", IBGECode: 3548500, StateID: sp.ID},
+		{Name: "São Paulo", IBGECode: "3550308", StateID: sp.ID},
+		{Name: "Campinas", IBGECode: "3509502", StateID: sp.ID},
+		{Name: "Santos", IBGECode: "3548500", StateID: sp.ID},
 	}
 
 	for _, city := range cities {
