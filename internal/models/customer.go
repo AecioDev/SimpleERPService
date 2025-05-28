@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -10,35 +8,25 @@ import (
 type Customer struct {
 	gorm.Model
 
-	FirstName      string `gorm:"size:100;" json:"first_name"`           // Nome
-	LastName       string `gorm:"size:100;" json:"last_name"`            // Nome
-	PersonType     string `gorm:"default:F" json:"person_type"`          // Pessoa Jurídica ou Física
-	DocumentNumber string `gorm:"size:20;unique" json:"document_number"` // CPF ou CNPJ pra facilitar a busca aqui
-	CompanyName    string `gorm:"size:100;" json:"company_name"`         // Razão Social
-	IsActive       bool   `gorm:"default:true" json:"is_active"`         // Status do Cliente
+	FirstName      string `gorm:"size:100" json:"first_name"`
+	LastName       string `gorm:"size:100" json:"last_name"`
+	PersonType     string `gorm:"default:F" json:"person_type"`          // F: Física, J: Jurídica
+	DocumentNumber string `gorm:"size:20;unique" json:"document_number"` // CPF ou CNPJ
+	CompanyName    string `gorm:"size:100" json:"company_name"`
+	IsActive       bool   `gorm:"default:true" json:"is_active"`
+	Notes          string `gorm:"size:255" json:"notes"`
 
-	// Usuário que criou
-	CreatedByID *uint `gorm:"column:created_by" json:"created_by"`
-	CreatedBy   *User `gorm:"foreignKey:CreatedByID" json:"created_by_user,omitempty"`
+	CreatedByID *uint `gorm:"column:created_by" json:"created_by_id"`
+	CreatedBy   *User `gorm:"foreignKey:CreatedByID" json:"created_by,omitempty"`
 
-	// Usuário que Atualizou
-	UpdatedByID *uint `gorm:"column:updated_by" json:"updated_by"`
-	UpdatedBy   *User `gorm:"foreignKey:UpdatedByID" json:"updated_by_user,omitempty"`
+	UpdatedByID *uint `gorm:"column:updated_by" json:"updated_by_id"`
+	UpdatedBy   *User `gorm:"foreignKey:UpdatedByID" json:"updated_by,omitempty"`
 
-	Notes     string `gorm:"size:255" json:"notes"` // Observações
-	CreatedAt time.Time
-	UpdatedAt time.Time
-
-	// Relacionamentos 1...N 1 Cliente pra muitos ...
-	Documents    []Document    `gorm:"foreignKey:CustomerID" json:"-"` // rg, inscrição estadual, inscrição municipal, cnh etc.
-	Addresses    []Address     `gorm:"foreignKey:CustomerID" json:"-"` // Endereços do Cliente
-	Contacts     []Contact     `gorm:"foreignKey:CustomerID" json:"-"` // email, telefones, etc.
-	Sales        []Sale        `gorm:"foreignKey:CustomerID" json:"-"` // Vendas associadas ao cliente
-	Transactions []Transaction `gorm:"foreignKey:CustomerID" json:"-"` // Transações associadas ao cliente (Titulos gerados no financeiro)
-
-	// Outros relacionamentos podem ser adicionados conforme necessário
-	// Exemplo: Invoices, Receipts, etc.
-
+	// Relacionamentos (não retornados por padrão)
+	Documents []Document `gorm:"foreignKey:CustomerID" json:"-"`
+	Addresses []Address  `gorm:"foreignKey:CustomerID" json:"-"`
+	Contacts  []Contact  `gorm:"foreignKey:CustomerID" json:"-"`
+	Sales     []Sale     `gorm:"foreignKey:CustomerID" json:"-"`
 }
 
 // TableName especifica o nome da tabela
@@ -51,12 +39,11 @@ func (Customer) TableName() string {
 type CreateCustomerRequest struct {
 	FirstName      string `json:"first_name" binding:"required"`
 	LastName       string `json:"last_name" binding:"omitempty"`
-	PersonType     string `json:"person_type" binding:"required"` // Solicitar Atenção no Front pq não poderá alterar mais depois
+	PersonType     string `json:"person_type" binding:"required"`
 	DocumentNumber string `json:"document_number" binding:"required"`
 	CompanyName    string `json:"company_name" binding:"omitempty"`
-	IsActive       bool   `json:"is_active" binding:"required"`
+	IsActive       bool   `json:"is_active"`
 	Notes          string `json:"notes"`
-	CreatedByID    uint   `json:"created_by" binding:"required"`
 }
 
 // UpdateCustomerRequest representa os dados para atualizar um cliente

@@ -4,12 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"simple-erp-service/internal/models"
 	"simple-erp-service/internal/repository"
 	"simple-erp-service/internal/service"
 	"simple-erp-service/internal/utils"
 	"simple-erp-service/internal/validator"
+
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -21,7 +22,7 @@ type CustomerHandler struct {
 // NewCustomerHandler cria um novo handler de clientes
 func NewCustomerHandler(db *gorm.DB) *CustomerHandler {
 	customerRepo := repository.NewCustomerRepository(db)
-	
+
 	return &CustomerHandler{
 		customerService: service.NewCustomerService(customerRepo),
 	}
@@ -106,7 +107,15 @@ func (h *CustomerHandler) CreateCustomer(c *gin.Context) {
 		return
 	}
 
-	customer, err := h.customerService.CreateCustomer(req)
+	// Aqui você pega o ID do usuário autenticado via middleware
+	userID, exists := utils.GetUserIDFromContext(c)
+	if !exists {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Usuário não autenticado", "")
+		return
+	}
+
+	// Passa o ID do usuário separadamente
+	customer, err := h.customerService.CreateCustomer(req, userID)
 	if err != nil {
 		if validator.IsValidationError(err) {
 			utils.ValidationErrorResponse(c, "Dados inválidos", err.Error())

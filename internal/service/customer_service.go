@@ -57,16 +57,14 @@ func (s *CustomerService) GetCustomerByID(id uint) (*models.CustomerDetailDTO, e
 }
 
 // CreateCustomer cria um novo cliente
-func (s *CustomerService) CreateCustomer(req models.CreateCustomerRequest) (*models.CustomerDTO, error) {
+func (s *CustomerService) CreateCustomer(req models.CreateCustomerRequest, userID uint) (*models.CustomerDTO, error) {
 	// Validar dados
 	if err := s.validator.ValidateForCreation(req); err != nil {
 		return nil, err
 	}
 
-	// Formatar documento (remover caracteres não numéricos)
-	document := strings.ReplaceAll(req.DocumentNumber, ".", "")
-	document = strings.ReplaceAll(document, "-", "")
-	document = strings.ReplaceAll(document, "/", "")
+	// Limpar CPF/CNPJ
+	document := strings.NewReplacer(".", "", "-", "", "/", "").Replace(req.DocumentNumber)
 
 	// Criar cliente
 	customer := models.Customer{
@@ -76,15 +74,16 @@ func (s *CustomerService) CreateCustomer(req models.CreateCustomerRequest) (*mod
 		DocumentNumber: document,
 		CompanyName:    req.CompanyName,
 		Notes:          req.Notes,
-		CreatedByID:    &req.CreatedByID,
-		IsActive:       true, // Por padrão, clientes são criados ativos
+		CreatedByID:    &userID,
+		IsActive:       true, // padrão
 	}
 
+	// Persistir
 	if err := s.customerRepo.Create(&customer); err != nil {
 		return nil, err
 	}
 
-	// Converter para DTO
+	// Retornar DTO
 	customerDTO := customer.ToDTO()
 	return &customerDTO, nil
 }
