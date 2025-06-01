@@ -22,13 +22,23 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
+	var resposta string
+	fmt.Print("Deseja rodar as Migrations? (s/n): ")
+	fmt.Scanln(&resposta)
+
 	// Executar migrações
-	if err := migrations.MigrateDB(db); err != nil {
-		return nil, err
+	if strings.ToLower(strings.TrimSpace(resposta)) == "s" {
+		log.Println("Rodando Migrations...")
+		if err := migrations.MigrateDB(db); err != nil {
+			return nil, err
+		}
+		log.Println("Migrations concluídos com sucesso!")
+	} else {
+		log.Println("Migrations ignorados.")
 	}
 
 	// Perguntar ao usuário se deseja rodar os seeders
-	var resposta string
+	resposta = ""
 	fmt.Print("Deseja rodar os seeders? (s/n): ")
 	fmt.Scanln(&resposta)
 

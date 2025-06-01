@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"net/http"
+	"time" // Adicionar import para time
 
 	"simple-erp-service/config"
+	"simple-erp-service/internal/models"
 	"simple-erp-service/internal/service"
 	"simple-erp-service/internal/utils"
 
@@ -14,12 +16,14 @@ import (
 // AuthHandler gerencia as requisições de autenticação
 type AuthHandler struct {
 	authService *service.AuthService
+	cfg         *config.Config // Adicionar configuração aqui para acessar as durações dos tokens
 }
 
 // NewAuthHandler cria um novo handler de autenticação
 func NewAuthHandler(db *gorm.DB, cfg *config.Config) *AuthHandler {
 	return &AuthHandler{
 		authService: service.NewAuthService(db, cfg),
+		cfg:         cfg, // Passar a configuração para o handler
 	}
 }
 
@@ -48,30 +52,100 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Login realizado com sucesso", response, nil)
+	// --- PASSO CHAVE 1: DEFINIR COOKIES HTTP-ONLY ---
+	// Calcular a duração do Access Token para o cookie
+	accessTokenDuration := time.Duration(h.cfg.JWT.AccessTokenExp.Minutes()) * time.Minute
+	// Calcular a duração do Refresh Token para o cookie
+	refreshTokenDuration := time.Duration(h.cfg.JWT.RefreshTokenExp.Minutes()) * time.Minute
+
+	// Definir o Access Token como cookie HTTP-Only
+	c.SetCookie(
+		"access_token",                     // Nome do cookie
+		response.AccessToken,               // Valor do token
+		int(accessTokenDuration.Seconds()), // MaxAge em segundos
+		"/",                                // Path: disponível em toda a aplicação
+		"",                                 // Domain: vazio para o domínio da requisição
+		h.cfg.App.Env == "production",      // Secure: true apenas em produção (HTTPS)
+		true,                               // HttpOnly: Essencial! NÃO acessível por JavaScript
+	)
+
+	// Definir o Refresh Token como cookie HTTP-Only
+	c.SetCookie(
+		"refresh_token",                     // Nome do cookie
+		response.RefreshToken,               // Valor do token
+		int(refreshTokenDuration.Seconds()), // MaxAge em segundos
+		"/",                                 // Path
+		"",                                  // Domain
+		h.cfg.App.Env == "production",       // Secure
+		true,                                // HttpOnly
+	)
+
+	// --- PASSO CHAVE 2: ENVIAR APENAS DADOS DO USUÁRIO NO JSON ---
+	// Criar uma resposta que contém apenas os dados do usuário para o frontend
+	// Isso evita que o frontend tenha acesso direto aos tokens (que agora estão nos cookies)
+	successResponse := models.LoginSuccessResponse{
+		User: response.User,
+	}
+
+	// Retornar a resposta de sucesso com os dados do usuário (e os cookies definidos)
+	utils.SuccessResponse(c, http.StatusOK, "Login realizado com sucesso", successResponse, nil)
 }
 
 // RefreshToken renova o token de acesso
+// PRECISAMOS REFACTORAR ESTE TAMBÉM
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
-	var req RefreshTokenRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ValidationErrorResponse(c, "Token de refresh inválido", err.Error())
+	// --- Lógica de RefreshToken para ler do cookie e definir novos cookies ---
+	// Em vez de ler do corpo da requisição, tentaremos ler o refresh_token do cookie
+	refreshToken, err := c.Cookie("refresh_token")
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusUnauthorized, "Falha ao renovar token", "Token de refresh ausente no cookie")
 		return
 	}
 
-	response, err := h.authService.RefreshToken(req.RefreshToken)
+	// Usar o token lido do cookie para renovar
+	response, err := h.authService.RefreshToken(refreshToken)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusUnauthorized, "Falha ao renovar token", err.Error())
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Token renovado com sucesso", response, nil)
+	// --- Definir NOVOS cookies HTTP-Only para Access e Refresh Token ---
+	accessTokenDuration := time.Duration(h.cfg.JWT.AccessTokenExp.Minutes()) * time.Minute
+	refreshTokenDuration := time.Duration(h.cfg.JWT.RefreshTokenExp.Minutes()) * time.Minute
+
+	c.SetCookie(
+		"access_token",
+		response.AccessToken,
+		int(accessTokenDuration.Seconds()),
+		"/", "",
+		h.cfg.App.Env == "production",
+		true,
+	)
+
+	c.SetCookie(
+		"refresh_token",
+		response.RefreshToken,
+		int(refreshTokenDuration.Seconds()),
+		"/", "",
+		h.cfg.App.Env == "production",
+		true,
+	)
+
+	// Enviar apenas os dados do usuário no JSON
+	successResponse := models.RefreshTokenSuccessResponse{
+		User: response.User,
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Token renovado com sucesso", successResponse, nil)
 }
 
 // Logout realiza o logout do usuário
 func (h *AuthHandler) Logout(c *gin.Context) {
-	// Nota: Como estamos usando JWT, o logout é gerenciado pelo cliente
-	// O servidor não precisa fazer nada além de retornar uma resposta de sucesso
+	// --- PASSO CHAVE 3: LIMPAR COOKIES NO LOGOUT ---
+	// Limpar os cookies de token
+	c.SetCookie("access_token", "", -1, "/", "", h.cfg.App.Env == "production", true)
+	c.SetCookie("refresh_token", "", -1, "/", "", h.cfg.App.Env == "production", true)
+
 	utils.SuccessResponse(c, http.StatusOK, "Logout realizado com sucesso", nil, nil)
 }
 
@@ -89,5 +163,9 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Usuário encontrado", user.ToResponse(), nil)
+	userResponse := models.LoginSuccessResponse{
+		User: user.ToResponse(),
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "Usuário encontrado", userResponse, nil)
 }

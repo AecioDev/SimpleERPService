@@ -31,11 +31,14 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 
 	// Configurar CORS
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
+		AllowOrigins: []string{"http://localhost:3000"}, // <--- MUDANÇA AQUI: Especifique a origem do seu frontend
+		// Se você tiver múltiplos frontends ou um domínio de produção:
+		// AllowOrigins: []string{"http://localhost:3000", "https://seu-dominio-frontend.com"},
+
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+		AllowCredentials: true, // <--- Isso deve permanecer TRUE
 		MaxAge:           12 * time.Hour,
 	}))
 

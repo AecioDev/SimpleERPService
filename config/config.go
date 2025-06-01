@@ -14,6 +14,12 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	JWT      JWTConfig
+	App      AppConfig
+}
+
+// AppConfig armazena configurações gerais da aplicação
+type AppConfig struct {
+	Env string // Ex: "development", "production", "test"
 }
 
 // ServerConfig armazena configurações do servidor HTTP
@@ -67,6 +73,9 @@ func Load() (*Config, error) {
 	jwtAccessExp, _ := strconv.Atoi(getEnv("JWT_ACCESS_EXP", "15"))      // 15 minutos
 	jwtRefreshExp, _ := strconv.Atoi(getEnv("JWT_REFRESH_EXP", "10080")) // 7 dias
 
+	// Configurações gerais da aplicação
+	appEnv := getEnv("APP_ENV", "development")
+
 	return &Config{
 		Server: ServerConfig{
 			Port:         port,
@@ -87,6 +96,9 @@ func Load() (*Config, error) {
 			Secret:          jwtSecret,
 			AccessTokenExp:  time.Duration(jwtAccessExp) * time.Minute,
 			RefreshTokenExp: time.Duration(jwtRefreshExp) * time.Minute,
+		},
+		App: AppConfig{
+			Env: appEnv,
 		},
 	}, nil
 }

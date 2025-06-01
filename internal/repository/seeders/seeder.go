@@ -9,7 +9,7 @@ func RunAll(db *gorm.DB) {
 	SeedStates(db)
 	SeedCities(db)
 
-	//SeedRolesPermissions(db)
+	SeedRolesPermissions(db)
 	//SeedMeasurementUnit(db)
 	//SeedPaymentMethod(db)
 	//SeedProductCategory(db)

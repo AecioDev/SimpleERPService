@@ -105,3 +105,11 @@ func ToPaginationDTO(pagination *utils.Pagination) *PaginationDTO {
 		TotalPages: pagination.TotalPages,
 	}
 }
+
+type LoginSuccessResponse struct {
+	User UserResponse `json:"user"`
+}
+
+type RefreshTokenSuccessResponse struct {
+	User UserResponse `json:"user"`
+}
