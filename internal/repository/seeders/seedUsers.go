@@ -1,6 +1,7 @@
 package seeders
 
 import (
+	"errors"
 	"log"
 
 	"simple-erp-service/internal/data-structure/models"
@@ -17,10 +18,19 @@ func SeedUserAdm(db *gorm.DB) {
 		log.Fatal("Erro ao configurar a senha de adm:", err)
 	}
 
-	// Buscar o perfil ADMIN
+	// Buscar ou criar o perfil ADMIN
 	var adminRole models.Role
 	if err := db.Where("name = ?", "ADMIN").First(&adminRole).Error; err != nil {
-		log.Fatal("Erro ao recuperar o perfil ADMIN:", err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			adminRole = models.Role{Name: "ADMIN"}
+			if err := db.Create(&adminRole).Error; err != nil {
+				log.Fatal("Erro ao criar o perfil ADMIN:", err)
+			} else {
+				log.Println("Perfil ADMIN criado!")
+			}
+		} else {
+			log.Fatal("Erro ao recuperar o perfil ADMIN:", err)
+		}
 	}
 
 	// Criar usuário administrador
