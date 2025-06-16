@@ -2,7 +2,7 @@ package repository
 
 import (
 	"errors"
-	"simple-erp-service/internal/models"
+	"simple-erp-service/internal/data-structure/models"
 	"simple-erp-service/internal/utils"
 
 	"gorm.io/gorm"
@@ -11,7 +11,7 @@ import (
 // CustomerRepository define as operações de acesso a dados para clientes
 type CustomerRepository interface {
 	Repository
-	FindAll(pagination *utils.Pagination) ([]models.Customer, error)
+	FindAll(pagination *models.Pagination) ([]models.Customer, error)
 	FindByID(id uint) (*models.Customer, error)
 	FindByDocument(document string) (*models.Customer, error)
 	Create(customer *models.Customer) error
@@ -36,19 +36,19 @@ func NewCustomerRepository(db *gorm.DB) CustomerRepository {
 }
 
 // FindAll retorna todos os clientes com paginação
-func (r *GormCustomerRepository) FindAll(pagination *utils.Pagination) ([]models.Customer, error) {
+func (r *GormCustomerRepository) FindAll(pagination *models.Pagination) ([]models.Customer, error) {
 	var customers []models.Customer
-	
+
 	query := r.GetDB().Model(&models.Customer{})
 	query, err := utils.Paginate(&models.Customer{}, pagination, query)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if err := query.Find(&customers).Error; err != nil {
 		return nil, err
 	}
-	
+
 	return customers, nil
 }
 

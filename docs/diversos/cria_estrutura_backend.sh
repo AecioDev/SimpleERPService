@@ -112,7 +112,7 @@ import (
 
 	"github.com/yourusername/simple-erp-service/config"
 	"github.com/yourusername/simple-erp-service/internal/api/server"
-	"github.com/yourusername/simple-erp-service/internal/models"
+	"github.com/yourusername/simple-erp-service/internal/data-structure/models"
 )
 
 func main() {
@@ -901,7 +901,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yourusername/simple-erp-service/internal/models"
+	"github.com/yourusername/simple-erp-service/internal/data-structure/models"
 	"gorm.io/gorm"
 )
 
@@ -964,7 +964,7 @@ import (
 	"time"
 
 	"github.com/yourusername/simple-erp-service/config"
-	"github.com/yourusername/simple-erp-service/internal/models"
+	"github.com/yourusername/simple-erp-service/internal/data-structure/models"
 	"github.com/yourusername/simple-erp-service/internal/utils"
 	"gorm.io/gorm"
 )
@@ -1112,7 +1112,7 @@ package service
 import (
 	"errors"
 
-	"github.com/yourusername/simple-erp-service/internal/models"
+	"github.com/yourusername/simple-erp-service/internal/data-structure/models"
 	"github.com/yourusername/simple-erp-service/internal/utils"
 	"gorm.io/gorm"
 )
@@ -1396,7 +1396,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yourusername/simple-erp-service/internal/models"
+	"github.com/yourusername/simple-erp-service/internal/data-structure/models"
 	"github.com/yourusername/simple-erp-service/internal/service"
 	"github.com/yourusername/simple-erp-service/internal/utils"
 	"gorm.io/gorm"

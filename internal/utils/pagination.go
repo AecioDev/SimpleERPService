@@ -1,24 +1,15 @@
 package utils
 
 import (
+	"simple-erp-service/internal/data-structure/models"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-// Pagination representa os parâmetros de paginação
-type Pagination struct {
-	Page      int    `json:"page"`
-	Limit     int    `json:"limit"`
-	Sort      string `json:"sort"`
-	Order     string `json:"order"`
-	TotalRows int64  `json:"total_rows"`
-	TotalPages int   `json:"total_pages"`
-}
-
 // GetPaginationParams extrai os parâmetros de paginação da requisição
-func GetPaginationParams(c *gin.Context) Pagination {
+func GetPaginationParams(c *gin.Context) models.Pagination {
 	// Valores padrão
 	page := 1
 	limit := 10
@@ -50,7 +41,7 @@ func GetPaginationParams(c *gin.Context) Pagination {
 		}
 	}
 
-	return Pagination{
+	return models.Pagination{
 		Page:  page,
 		Limit: limit,
 		Sort:  sort,
@@ -59,7 +50,7 @@ func GetPaginationParams(c *gin.Context) Pagination {
 }
 
 // Paginate aplica a paginação a uma consulta GORM
-func Paginate(value interface{}, pagination *Pagination, db *gorm.DB) (*gorm.DB, error) {
+func Paginate(value interface{}, pagination *models.Pagination, db *gorm.DB) (*gorm.DB, error) {
 	var totalRows int64
 	db.Model(value).Count(&totalRows)
 

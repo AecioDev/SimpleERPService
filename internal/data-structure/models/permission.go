@@ -8,10 +8,12 @@ import (
 type Permission struct {
 	gorm.Model
 
-	Name        string `gorm:"size:100;not null;unique" json:"name"`
+	Permission  string `gorm:"size:100;not null;unique" json:"permission"`
 	Description string `json:"description"`
 	Module      string `gorm:"size:50;not null" json:"module"`
-	Roles       []Role `gorm:"many2many:role_permissions;" json:"-"`
+
+	// Relacionamento many-to-many com Roles
+	Roles []Role `gorm:"many2many:role_permissions;" json:"-"`
 }
 
 // TableName especifica o nome da tabela

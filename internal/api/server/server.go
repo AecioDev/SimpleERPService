@@ -114,4 +114,5 @@ func (s *Server) setupRoutes() {
 	routes.SetupFinancialRoutes(api, s.db)
 	routes.SetupDashboardRoutes(api, s.db)
 	routes.SetupSystemRoutes(api, s.db)
+	routes.SetupPermissionRoutes(api, s.db)
 }

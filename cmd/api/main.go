@@ -1,3 +1,14 @@
+// @title Simple ERP Service API
+// @version 1.0
+// @description API para o sistema Simple ERP Service
+// @host localhost:4000
+// @BasePath /api
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+// @description Descrição: Insira seu token JWT no formato "Bearer TOKEN"
+
 package main
 
 import (

@@ -1,7 +1,8 @@
 package service
 
 import (
-	"simple-erp-service/internal/models"
+	dto "simple-erp-service/internal/data-structure/dto"
+	"simple-erp-service/internal/data-structure/models"
 	"simple-erp-service/internal/repository"
 	"simple-erp-service/internal/utils"
 	"simple-erp-service/internal/validator"
@@ -23,26 +24,26 @@ func NewCustomerService(customerRepo repository.CustomerRepository) *CustomerSer
 }
 
 // GetCustomers retorna uma lista paginada de clientes
-func (s *CustomerService) GetCustomers(pagination *utils.Pagination) (*models.CustomerListDTO, error) {
+func (s *CustomerService) GetCustomers(pagination *models.Pagination) (*dto.ApiCustomerListPaginated, error) {
 	customers, err := s.customerRepo.FindAll(pagination)
 	if err != nil {
 		return nil, err
 	}
 
 	// Converter para DTOs
-	customerDTOs := make([]models.CustomerDTO, 0, len(customers))
+	customerDTOs := make([]dto.ApiCustomer, 0, len(customers))
 	for _, customer := range customers {
-		customerDTOs = append(customerDTOs, customer.ToDTO())
+		customerDTOs = append(customerDTOs, dto.ApiCustomerFromModel(customer))
 	}
 
-	return &models.CustomerListDTO{
+	return &dto.ApiCustomerListPaginated{
 		Customer:   customerDTOs,
-		Pagination: *models.ToPaginationDTO(pagination),
+		Pagination: *dto.ApiPaginationFromModel(pagination),
 	}, nil
 }
 
 // GetCustomerByID busca um cliente pelo ID
-func (s *CustomerService) GetCustomerByID(id uint) (*models.CustomerDetailDTO, error) {
+func (s *CustomerService) GetCustomerByID(id uint) (*dto.ApiCustomerDetail, error) {
 	customer, err := s.customerRepo.FindByID(id)
 	if err != nil {
 		return nil, err
@@ -52,12 +53,12 @@ func (s *CustomerService) GetCustomerByID(id uint) (*models.CustomerDetailDTO, e
 	}
 
 	// Converter para DTO
-	customerDetailDTO := customer.ToDetailDTO()
+	customerDetailDTO := dto.ApiCustomerDetailFromModel(*customer)
 	return &customerDetailDTO, nil
 }
 
 // CreateCustomer cria um novo cliente
-func (s *CustomerService) CreateCustomer(req models.CreateCustomerRequest, userID uint) (*models.CustomerDTO, error) {
+func (s *CustomerService) CreateCustomer(req models.CreateCustomerRequest, userID uint) (*dto.ApiCustomer, error) {
 	// Validar dados
 	if err := s.validator.ValidateForCreation(req); err != nil {
 		return nil, err
@@ -84,12 +85,12 @@ func (s *CustomerService) CreateCustomer(req models.CreateCustomerRequest, userI
 	}
 
 	// Retornar DTO
-	customerDTO := customer.ToDTO()
+	customerDTO := dto.ApiCustomerFromModel(customer)
 	return &customerDTO, nil
 }
 
 // UpdateCustomer atualiza um cliente existente
-func (s *CustomerService) UpdateCustomer(id uint, req models.UpdateCustomerRequest) (*models.CustomerDTO, error) {
+func (s *CustomerService) UpdateCustomer(id uint, req models.UpdateCustomerRequest) (*dto.ApiCustomer, error) {
 	// Validar dados
 	if err := s.validator.ValidateForUpdate(id, req); err != nil {
 		return nil, err
@@ -147,7 +148,7 @@ func (s *CustomerService) UpdateCustomer(id uint, req models.UpdateCustomerReque
 	}
 
 	// Converter para DTO
-	customerDTO := customer.ToDTO()
+	customerDTO := dto.ApiCustomerFromModel(*customer)
 	return &customerDTO, nil
 }
 

@@ -26,38 +26,6 @@ func (User) TableName() string {
 	return "users"
 }
 
-// UserResponse é usado para retornar informações do usuário sem dados sensíveis
-type UserResponse struct {
-	ID        uint       `json:"id"`
-	Username  string     `json:"username"`
-	Name      string     `json:"name"`
-	Email     string     `json:"email"`
-	Phone     string     `json:"phone"`
-	RoleID    uint       `json:"role_id"`
-	Role      *Role      `json:"role,omitempty"`
-	IsActive  bool       `json:"is_active"`
-	LastLogin *time.Time `json:"last_login"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-}
-
-// ToResponse converte um User para UserResponse
-func (u *User) ToResponse() UserResponse {
-	return UserResponse{
-		ID:        u.ID,
-		Username:  u.Username,
-		Name:      u.Name,
-		Email:     u.Email,
-		Phone:     u.Phone,
-		RoleID:    u.RoleID,
-		Role:      u.Role,
-		IsActive:  u.IsActive,
-		LastLogin: u.LastLogin,
-		CreatedAt: u.CreatedAt,
-		UpdatedAt: u.UpdatedAt,
-	}
-}
-
 // CreateUserRequest representa os dados para criar um novo usuário
 type CreateUserRequest struct {
 	Username string `json:"username" binding:"required,min=3,max=50"`

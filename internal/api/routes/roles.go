@@ -25,11 +25,7 @@ func SetupRoleRoutes(router *gin.RouterGroup, db *gorm.DB) {
 		roles.GET("/:id", middlewares.RequirePermission("users.view"), roleHandler.GetRole)
 		roles.POST("", middlewares.RequirePermission("users.create"), roleHandler.CreateRole)
 		roles.PUT("/:id", middlewares.RequirePermission("users.edit"), roleHandler.UpdateRole)
-		roles.DELETE("/:id", middlewares.RequirePermission("users.delete"), roleHandler.DeleteRole)
-
-		// Rotas de permissões
-		roles.GET("/permissions", middlewares.RequirePermission("users.view"), roleHandler.GetPermissions)
-		roles.GET("/permissions/by-module", middlewares.RequirePermission("users.view"), roleHandler.GetPermissionsByModule)
 		roles.PUT("/:id/permissions", middlewares.RequirePermission("users.edit"), roleHandler.UpdateRolePermissions)
+		roles.DELETE("/:id", middlewares.RequirePermission("users.delete"), roleHandler.DeleteRole)
 	}
 }

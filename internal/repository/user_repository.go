@@ -2,7 +2,7 @@ package repository
 
 import (
 	"errors"
-	"simple-erp-service/internal/models"
+	"simple-erp-service/internal/data-structure/models"
 	"simple-erp-service/internal/utils"
 
 	"gorm.io/gorm"
@@ -11,7 +11,7 @@ import (
 // UserRepository define as operações de acesso a dados para usuários
 type UserRepository interface {
 	Repository
-	FindAll(pagination *utils.Pagination) ([]models.User, error)
+	FindAll(pagination *models.Pagination) ([]models.User, error)
 	FindByID(id uint) (*models.User, error)
 	FindByIDWithRole(id uint) (*models.User, error)
 	FindByUsername(username string) (*models.User, error)
@@ -39,19 +39,19 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 }
 
 // FindAll retorna todos os usuários com paginação
-func (r *GormUserRepository) FindAll(pagination *utils.Pagination) ([]models.User, error) {
+func (r *GormUserRepository) FindAll(pagination *models.Pagination) ([]models.User, error) {
 	var users []models.User
-	
+
 	query := r.GetDB().Model(&models.User{}).Preload("Role")
 	query, err := utils.Paginate(&models.User{}, pagination, query)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if err := query.Find(&users).Error; err != nil {
 		return nil, err
 	}
-	
+
 	return users, nil
 }
 

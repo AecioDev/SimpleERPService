@@ -1,7 +1,7 @@
 package validator
 
 import (
-	"simple-erp-service/internal/models"
+	"simple-erp-service/internal/data-structure/models"
 	"simple-erp-service/internal/repository"
 	"simple-erp-service/internal/utils"
 )

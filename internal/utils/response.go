@@ -2,8 +2,10 @@ package utils
 
 import (
 	"net/http"
+	"simple-erp-service/internal/utils/ginutils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 // Response representa a estrutura padrão de resposta da API
@@ -41,4 +43,28 @@ func ValidationErrorResponse(c *gin.Context, message string, errors interface{})
 		Message: message,
 		Data:    errors,
 	})
+}
+
+func handleBindError(c *gin.Context, err error) error {
+	if err != nil {
+		ginutils.Res(c).StatusBadRequest().SendError(err)
+	}
+
+	return err
+}
+
+func BindJsonOrSendErrorRes(c *gin.Context, obj any) error {
+	return handleBindError(c, c.ShouldBindJSON(obj))
+}
+
+func BindQueryOrSendErrorRes(c *gin.Context, obj any) error {
+	return handleBindError(c, c.ShouldBindQuery(obj))
+}
+
+func BindUriOrSendErrorRes(c *gin.Context, obj any) error {
+	return handleBindError(c, c.ShouldBindUri(obj))
+}
+
+func BindFormOrSendErrorRes(c *gin.Context, obj any) error {
+	return handleBindError(c, c.ShouldBindWith(obj, binding.Form))
 }

@@ -1,7 +1,8 @@
 package service
 
 import (
-	"simple-erp-service/internal/models"
+	dto "simple-erp-service/internal/data-structure/dto"
+	"simple-erp-service/internal/data-structure/models"
 	"simple-erp-service/internal/repository"
 	"simple-erp-service/internal/utils"
 	"simple-erp-service/internal/validator"
@@ -27,26 +28,26 @@ func NewUserService(
 }
 
 // GetUsers retorna uma lista paginada de usuários
-func (s *UserService) GetUsers(pagination *utils.Pagination) (*models.UserListDTO, error) {
+func (s *UserService) GetUsers(pagination *models.Pagination) (*dto.ApiUserListPaginated, error) {
 	users, err := s.userRepo.FindAll(pagination)
 	if err != nil {
 		return nil, err
 	}
 
 	// Converter para DTOs
-	userDTOs := make([]models.UserDTO, 0, len(users))
+	userDTOs := make([]dto.ApiUser, 0, len(users))
 	for _, user := range users {
-		userDTOs = append(userDTOs, user.ToDTO())
+		userDTOs = append(userDTOs, dto.ApiUserFromModel(user))
 	}
 
-	return &models.UserListDTO{
+	return &dto.ApiUserListPaginated{
 		Users:      userDTOs,
-		Pagination: models.ToPaginationDTO(pagination),
+		Pagination: dto.ApiPaginationFromModel(pagination),
 	}, nil
 }
 
 // GetUserByID busca um usuário pelo ID
-func (s *UserService) GetUserByID(id uint) (*models.UserDetailDTO, error) {
+func (s *UserService) GetUserByID(id uint) (*dto.ApiUserDetail, error) {
 	user, err := s.userRepo.FindByIDWithRole(id)
 	if err != nil {
 		return nil, err
@@ -56,12 +57,12 @@ func (s *UserService) GetUserByID(id uint) (*models.UserDetailDTO, error) {
 	}
 
 	// Converter para DTO
-	userDetailDTO := user.ToDetailDTO()
+	userDetailDTO := dto.ApiUserDetailFromModel(*user)
 	return &userDetailDTO, nil
 }
 
 // CreateUser cria um novo usuário
-func (s *UserService) CreateUser(req models.CreateUserRequest) (*models.UserDTO, error) {
+func (s *UserService) CreateUser(req models.CreateUserRequest) (*dto.ApiUser, error) {
 	// Validar dados
 	if err := s.validator.ValidateForCreation(req); err != nil {
 		return nil, err
@@ -94,12 +95,12 @@ func (s *UserService) CreateUser(req models.CreateUserRequest) (*models.UserDTO,
 	}
 
 	// Converter para DTO
-	userDTO := completeUser.ToDTO()
+	userDTO := dto.ApiUserFromModel(*completeUser)
 	return &userDTO, nil
 }
 
 // UpdateUser atualiza um usuário existente
-func (s *UserService) UpdateUser(id uint, req models.UpdateUserRequest) (*models.UserDTO, error) {
+func (s *UserService) UpdateUser(id uint, req models.UpdateUserRequest) (*dto.ApiUser, error) {
 	// Validar dados
 	if err := s.validator.ValidateForUpdate(id, req); err != nil {
 		return nil, err
@@ -140,7 +141,7 @@ func (s *UserService) UpdateUser(id uint, req models.UpdateUserRequest) (*models
 	}
 
 	// Converter para DTO
-	userDTO := completeUser.ToDTO()
+	userDTO := dto.ApiUserFromModel(*completeUser)
 	return &userDTO, nil
 }
 

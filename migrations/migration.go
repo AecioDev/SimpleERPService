@@ -2,7 +2,7 @@ package migrations
 
 import (
 	"log"
-	"simple-erp-service/internal/models"
+	"simple-erp-service/internal/data-structure/models"
 
 	"gorm.io/gorm"
 )

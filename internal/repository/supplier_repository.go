@@ -2,7 +2,7 @@ package repository
 
 import (
 	"errors"
-	"simple-erp-service/internal/models"
+	"simple-erp-service/internal/data-structure/models"
 	"simple-erp-service/internal/utils"
 
 	"gorm.io/gorm"
@@ -11,7 +11,7 @@ import (
 // SupplierRepository define as operações de acesso a dados para fornecedores
 type SupplierRepository interface {
 	Repository
-	FindAll(pagination *utils.Pagination) ([]models.Supplier, error)
+	FindAll(pagination *models.Pagination) ([]models.Supplier, error)
 	FindByID(id uint) (*models.Supplier, error)
 	FindByDocument(document string) (*models.Supplier, error)
 	Create(supplier *models.Supplier) error
@@ -36,19 +36,19 @@ func NewSupplierRepository(db *gorm.DB) SupplierRepository {
 }
 
 // FindAll retorna todos os fornecedores com paginação
-func (r *GormSupplierRepository) FindAll(pagination *utils.Pagination) ([]models.Supplier, error) {
+func (r *GormSupplierRepository) FindAll(pagination *models.Pagination) ([]models.Supplier, error) {
 	var suppliers []models.Supplier
-	
+
 	query := r.GetDB().Model(&models.Supplier{})
 	query, err := utils.Paginate(&models.Supplier{}, pagination, query)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if err := query.Find(&suppliers).Error; err != nil {
 		return nil, err
 	}
-	
+
 	return suppliers, nil
 }
 

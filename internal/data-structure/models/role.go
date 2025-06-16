@@ -14,9 +14,17 @@ type Role struct {
 	Users       []User       `gorm:"foreignKey:RoleID" json:"-"`
 }
 
-// TableName especifica o nome da tabela
 func (Role) TableName() string {
 	return "roles"
+}
+
+type RolePermissions struct {
+	role_id       uint
+	permission_id uint
+}
+
+func (RolePermissions) TableName() string {
+	return "role_permissions"
 }
 
 // CreateRoleRequest representa os dados para criar um novo perfil

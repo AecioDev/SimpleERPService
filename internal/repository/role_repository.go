@@ -2,8 +2,7 @@ package repository
 
 import (
 	"errors"
-	"simple-erp-service/internal/models"
-	"simple-erp-service/internal/utils"
+	"simple-erp-service/internal/data-structure/models"
 
 	"gorm.io/gorm"
 )
@@ -11,7 +10,7 @@ import (
 // RoleRepository define as operações de acesso a dados para perfis
 type RoleRepository interface {
 	Repository
-	FindAll(pagination *utils.Pagination) ([]models.Role, error)
+	FindAll() ([]models.Role, error)
 	FindByID(id uint) (*models.Role, error)
 	FindByIDWithPermissions(id uint) (*models.Role, error)
 	FindByName(name string) (*models.Role, error)
@@ -21,6 +20,7 @@ type RoleRepository interface {
 	ExistsByName(name string) (bool, error)
 	ExistsByNameExcept(name string, id uint) (bool, error)
 	UpdatePermissions(role *models.Role, permissionIDs []uint) error
+	CountByPermissionID(permissionID uint) (int64, error)
 }
 
 // GormRoleRepository implementa RoleRepository usando GORM
@@ -36,19 +36,12 @@ func NewRoleRepository(db *gorm.DB) RoleRepository {
 }
 
 // FindAll retorna todos os perfis com paginação
-func (r *GormRoleRepository) FindAll(pagination *utils.Pagination) ([]models.Role, error) {
+func (r *GormRoleRepository) FindAll() ([]models.Role, error) {
 	var roles []models.Role
-	
-	query := r.GetDB().Model(&models.Role{})
-	query, err := utils.Paginate(&models.Role{}, pagination, query)
-	if err != nil {
+	if err := r.GetDB().Find(&roles).Error; err != nil {
 		return nil, err
 	}
-	
-	if err := query.Find(&roles).Error; err != nil {
-		return nil, err
-	}
-	
+
 	return roles, nil
 }
 
@@ -123,12 +116,19 @@ func (r *GormRoleRepository) UpdatePermissions(role *models.Role, permissionIDs 
 	if err := r.GetDB().Where("id IN ?", permissionIDs).Find(&permissions).Error; err != nil {
 		return err
 	}
-	
+
 	// Verificar se todas as permissões solicitadas existem
 	if len(permissions) != len(permissionIDs) {
 		return errors.New("uma ou mais permissões não existem")
 	}
-	
+
 	// Atualizar permissões do perfil
 	return r.GetDB().Model(role).Association("Permissions").Replace(&permissions)
+}
+
+// CountByPermissionID conta quantos Papeis estão usando uma determinada permissão
+func (r *GormRoleRepository) CountByPermissionID(permissionID uint) (int64, error) {
+	var count int64
+	err := r.GetDB().Model(&models.RolePermissions{}).Where("permission_id = ?", permissionID).Count(&count).Error
+	return count, err
 }

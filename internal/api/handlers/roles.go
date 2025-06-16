@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"simple-erp-service/internal/models"
+	"simple-erp-service/internal/data-structure/models"
 	"simple-erp-service/internal/repository"
 	"simple-erp-service/internal/service"
 	"simple-erp-service/internal/utils"
@@ -46,15 +46,13 @@ func NewRoleHandler(db *gorm.DB) *RoleHandler {
 // @Failure 500 {object} utils.Response "Erro ao buscar perfis"
 // @Router /roles [get]
 func (h *RoleHandler) GetRoles(c *gin.Context) {
-	pagination := utils.GetPaginationParams(c)
-
-	roles, err := h.roleService.GetRoles(&pagination)
+	roles, err := h.roleService.GetRoles()
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusInternalServerError, "Erro ao buscar perfis", err.Error())
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Perfis encontrados", roles, pagination)
+	utils.SuccessResponse(c, http.StatusOK, "Perfis encontrados", roles, nil)
 }
 
 // GetRole retorna um perfil específico
@@ -90,7 +88,7 @@ func (h *RoleHandler) GetRole(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "Perfil encontrado", role, nil)
 }
 
-// CreateRole cria um novo perfil
+// CreateRole cria um novo perfil ADMIN, FINANCEIRO, GERENTE, ETC.
 // @Summary Criar perfil
 // @Description Cria um novo perfil
 // @Tags roles
@@ -196,48 +194,6 @@ func (h *RoleHandler) DeleteRole(c *gin.Context) {
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Perfil excluído com sucesso", nil, nil)
-}
-
-// GetPermissions retorna todas as permissões
-// @Summary Listar permissões
-// @Description Retorna todas as permissões
-// @Tags roles
-// @Accept json
-// @Produce json
-// @Security ApiKeyAuth
-// @Success 200 {object} utils.Response "Permissões encontradas"
-// @Failure 401 {object} utils.Response "Não autorizado"
-// @Failure 500 {object} utils.Response "Erro ao buscar permissões"
-// @Router /roles/permissions [get]
-func (h *RoleHandler) GetPermissions(c *gin.Context) {
-	permissions, err := h.roleService.GetPermissions()
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Erro ao buscar permissões", err.Error())
-		return
-	}
-
-	utils.SuccessResponse(c, http.StatusOK, "Permissões encontradas", permissions, nil)
-}
-
-// GetPermissionsByModule retorna permissões agrupadas por módulo
-// @Summary Listar permissões por módulo
-// @Description Retorna permissões agrupadas por módulo
-// @Tags roles
-// @Accept json
-// @Produce json
-// @Security ApiKeyAuth
-// @Success 200 {object} utils.Response "Permissões encontradas"
-// @Failure 401 {object} utils.Response "Não autorizado"
-// @Failure 500 {object} utils.Response "Erro ao buscar permissões"
-// @Router /roles/permissions/by-module [get]
-func (h *RoleHandler) GetPermissionsByModule(c *gin.Context) {
-	permissions, err := h.roleService.GetPermissionsByModule()
-	if err != nil {
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Erro ao buscar permissões", err.Error())
-		return
-	}
-
-	utils.SuccessResponse(c, http.StatusOK, "Permissões encontradas", permissions, nil)
 }
 
 // UpdateRolePermissions atualiza as permissões de um perfil

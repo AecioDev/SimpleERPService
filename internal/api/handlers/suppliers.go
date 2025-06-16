@@ -4,12 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
-	"simple-erp-service/internal/models"
+	"simple-erp-service/internal/data-structure/models"
 	"simple-erp-service/internal/repository"
 	"simple-erp-service/internal/service"
 	"simple-erp-service/internal/utils"
 	"simple-erp-service/internal/validator"
+
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -21,7 +22,7 @@ type SupplierHandler struct {
 // NewSupplierHandler cria um novo handler de fornecedores
 func NewSupplierHandler(db *gorm.DB) *SupplierHandler {
 	supplierRepo := repository.NewSupplierRepository(db)
-	
+
 	return &SupplierHandler{
 		supplierService: service.NewSupplierService(supplierRepo),
 	}

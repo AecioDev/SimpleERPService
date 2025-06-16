@@ -1,7 +1,8 @@
 package service
 
 import (
-	"simple-erp-service/internal/models"
+	dto "simple-erp-service/internal/data-structure/dto"
+	"simple-erp-service/internal/data-structure/models"
 	"simple-erp-service/internal/repository"
 	"simple-erp-service/internal/utils"
 	"simple-erp-service/internal/validator"
@@ -23,26 +24,26 @@ func NewSupplierService(supplierRepo repository.SupplierRepository) *SupplierSer
 }
 
 // GetSuppliers retorna uma lista paginada de fornecedores
-func (s *SupplierService) GetSuppliers(pagination *utils.Pagination) (*models.SupplierListDTO, error) {
+func (s *SupplierService) GetSuppliers(pagination *models.Pagination) (*dto.ApiSupplierListPaginated, error) {
 	suppliers, err := s.supplierRepo.FindAll(pagination)
 	if err != nil {
 		return nil, err
 	}
 
 	// Converter para DTOs
-	supplierDTOs := make([]models.SupplierDTO, 0, len(suppliers))
+	supplierDTOs := make([]dto.ApiSupplier, 0, len(suppliers))
 	for _, supplier := range suppliers {
-		supplierDTOs = append(supplierDTOs, supplier.ToDTO())
+		supplierDTOs = append(supplierDTOs, dto.ApiSupplierFromModel(supplier))
 	}
 
-	return &models.SupplierListDTO{
+	return &dto.ApiSupplierListPaginated{
 		Supplier:   supplierDTOs,
-		Pagination: *models.ToPaginationDTO(pagination),
+		Pagination: *dto.ApiPaginationFromModel(pagination),
 	}, nil
 }
 
 // GetSupplierByID busca um fornecedor pelo ID
-func (s *SupplierService) GetSupplierByID(id uint) (*models.SupplierDetailDTO, error) {
+func (s *SupplierService) GetSupplierByID(id uint) (*dto.ApiSupplier, error) {
 	supplier, err := s.supplierRepo.FindByID(id)
 	if err != nil {
 		return nil, err
@@ -52,12 +53,12 @@ func (s *SupplierService) GetSupplierByID(id uint) (*models.SupplierDetailDTO, e
 	}
 
 	// Converter para DTO
-	supplierDetailDTO := supplier.ToDetailDTO()
+	supplierDetailDTO := dto.ApiSupplierFromModel(*supplier)
 	return &supplierDetailDTO, nil
 }
 
 // CreateSupplier cria um novo fornecedor
-func (s *SupplierService) CreateSupplier(req models.CreateSupplierRequest) (*models.SupplierDTO, error) {
+func (s *SupplierService) CreateSupplier(req models.CreateSupplierRequest) (*dto.ApiSupplier, error) {
 	// Validar dados
 	if err := s.validator.ValidateForCreation(req); err != nil {
 		return nil, err
@@ -85,12 +86,12 @@ func (s *SupplierService) CreateSupplier(req models.CreateSupplierRequest) (*mod
 	}
 
 	// Converter para DTO
-	supplierDTO := supplier.ToDTO()
+	supplierDTO := dto.ApiSupplierFromModel(supplier)
 	return &supplierDTO, nil
 }
 
 // UpdateSupplier atualiza um fornecedor existente
-func (s *SupplierService) UpdateSupplier(id uint, req models.UpdateSupplierRequest) (*models.SupplierDTO, error) {
+func (s *SupplierService) UpdateSupplier(id uint, req models.UpdateSupplierRequest) (*dto.ApiSupplier, error) {
 	// Validar dados
 	if err := s.validator.ValidateForUpdate(id, req); err != nil {
 		return nil, err
@@ -148,7 +149,7 @@ func (s *SupplierService) UpdateSupplier(id uint, req models.UpdateSupplierReque
 	}
 
 	// Converter para DTO
-	supplierDTO := supplier.ToDTO()
+	supplierDTO := dto.ApiSupplierFromModel(*supplier)
 	return &supplierDTO, nil
 }
 

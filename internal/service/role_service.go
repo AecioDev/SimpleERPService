@@ -1,7 +1,8 @@
 package service
 
 import (
-	"simple-erp-service/internal/models"
+	dto "simple-erp-service/internal/data-structure/dto"
+	"simple-erp-service/internal/data-structure/models"
 	"simple-erp-service/internal/repository"
 	"simple-erp-service/internal/utils"
 	"simple-erp-service/internal/validator"
@@ -29,24 +30,24 @@ func NewRoleService(
 	}
 }
 
-// GetRoles retorna uma lista paginada de perfis
-func (s *RoleService) GetRoles(pagination *utils.Pagination) ([]models.RoleDTO, error) {
-	roles, err := s.roleRepo.FindAll(pagination)
+// GetRoles retorna uma lista paginada de papeis
+func (s *RoleService) GetRoles() ([]dto.ApiRole, error) {
+	roles, err := s.roleRepo.FindAll()
 	if err != nil {
 		return nil, err
 	}
 
 	// Converter para DTOs
-	roleDTOs := make([]models.RoleDTO, 0, len(roles))
+	roleDTOs := make([]dto.ApiRole, 0, len(roles))
 	for _, role := range roles {
-		roleDTOs = append(roleDTOs, role.ToDTO())
+		roleDTOs = append(roleDTOs, dto.ApiRoleFromModel(role))
 	}
 
 	return roleDTOs, nil
 }
 
-// GetRoleByID busca um perfil pelo ID
-func (s *RoleService) GetRoleByID(id uint) (*models.RoleDetailDTO, error) {
+// GetRoleByID busca um papel pelo ID
+func (s *RoleService) GetRoleByID(id uint) (*dto.ApiRoleDetail, error) {
 	role, err := s.roleRepo.FindByIDWithPermissions(id)
 	if err != nil {
 		return nil, err
@@ -56,18 +57,18 @@ func (s *RoleService) GetRoleByID(id uint) (*models.RoleDetailDTO, error) {
 	}
 
 	// Converter para DTO
-	roleDetailDTO := role.ToDetailDTO()
+	roleDetailDTO := dto.ApiRoleDetailFromModel(*role)
 	return &roleDetailDTO, nil
 }
 
-// CreateRole cria um novo perfil
-func (s *RoleService) CreateRole(req models.CreateRoleRequest) (*models.RoleDTO, error) {
+// CreateRole cria um novo papel
+func (s *RoleService) CreateRole(req models.CreateRoleRequest) (*dto.ApiRole, error) {
 	// Validar dados
 	if err := s.validator.ValidateForCreation(req); err != nil {
 		return nil, err
 	}
 
-	// Criar perfil
+	// Criar papel
 	role := models.Role{
 		Name:        req.Name,
 		Description: req.Description,
@@ -78,18 +79,18 @@ func (s *RoleService) CreateRole(req models.CreateRoleRequest) (*models.RoleDTO,
 	}
 
 	// Converter para DTO
-	roleDTO := role.ToDTO()
+	roleDTO := dto.ApiRoleFromModel(role)
 	return &roleDTO, nil
 }
 
-// UpdateRole atualiza um perfil existente
-func (s *RoleService) UpdateRole(id uint, req models.UpdateRoleRequest) (*models.RoleDTO, error) {
+// UpdateRole atualiza um papel existente
+func (s *RoleService) UpdateRole(id uint, req models.UpdateRoleRequest) (*dto.ApiRole, error) {
 	// Validar dados
 	if err := s.validator.ValidateForUpdate(id, req); err != nil {
 		return nil, err
 	}
 
-	// Buscar perfil
+	// Buscar papel
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
 		return nil, err
@@ -112,70 +113,29 @@ func (s *RoleService) UpdateRole(id uint, req models.UpdateRoleRequest) (*models
 	}
 
 	// Converter para DTO
-	roleDTO := role.ToDTO()
+	roleDTO := dto.ApiRoleFromModel(*role)
 	return &roleDTO, nil
 }
 
-// DeleteRole exclui um perfil
+// DeleteRole exclui um papel
 func (s *RoleService) DeleteRole(id uint) error {
-	// Validar se o perfil pode ser excluído
+	// Validar se o papel pode ser excluído
 	if err := s.validator.ValidateForDeletion(id); err != nil {
 		return err
 	}
 
-	// Excluir perfil
+	// Excluir papel
 	return s.roleRepo.Delete(id)
 }
 
-// GetPermissions retorna todas as permissões
-func (s *RoleService) GetPermissions() ([]models.PermissionDTO, error) {
-	permissions, err := s.permRepo.FindAll()
-	if err != nil {
-		return nil, err
-	}
-
-	// Converter para DTOs
-	permissionDTOs := make([]models.PermissionDTO, 0, len(permissions))
-	for _, perm := range permissions {
-		permissionDTOs = append(permissionDTOs, perm.ToDTO())
-	}
-
-	return permissionDTOs, nil
-}
-
-// GetPermissionsByModule retorna permissões agrupadas por módulo
-func (s *RoleService) GetPermissionsByModule() ([]models.PermissionsByModuleDTO, error) {
-	moduleMap, err := s.permRepo.GroupByModule()
-	if err != nil {
-		return nil, err
-	}
-
-	// Converter mapa para slice
-	var result []models.PermissionsByModule
-	for module, perms := range moduleMap {
-		result = append(result, models.PermissionsByModule{
-			Module:      module,
-			Permissions: perms,
-		})
-	}
-
-	// Converter para DTOs
-	resultDTOs := make([]models.PermissionsByModuleDTO, 0, len(result))
-	for _, item := range result {
-		resultDTOs = append(resultDTOs, item.ToDTO())
-	}
-
-	return resultDTOs, nil
-}
-
-// UpdateRolePermissions atualiza as permissões de um perfil
-func (s *RoleService) UpdateRolePermissions(id uint, permissionIDs []uint) (*models.RoleDetailDTO, error) {
+// UpdateRolePermissions atualiza as permissões de um papel
+func (s *RoleService) UpdateRolePermissions(id uint, permissionIDs []uint) (*dto.ApiRoleDetail, error) {
 	// Validar dados
 	if err := s.validator.ValidatePermissionUpdate(id, permissionIDs); err != nil {
 		return nil, err
 	}
 
-	// Buscar perfil
+	// Buscar papel
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
 		return nil, err
@@ -189,13 +149,13 @@ func (s *RoleService) UpdateRolePermissions(id uint, permissionIDs []uint) (*mod
 		return nil, err
 	}
 
-	// Buscar perfil atualizado com permissões
+	// Buscar papel atualizado com permissões
 	updatedRole, err := s.roleRepo.FindByIDWithPermissions(id)
 	if err != nil {
 		return nil, err
 	}
 
 	// Converter para DTO
-	roleDetailDTO := updatedRole.ToDetailDTO()
+	roleDetailDTO := dto.ApiRoleDetailFromModel(*updatedRole)
 	return &roleDetailDTO, nil
 }

@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"simple-erp-service/config"
-	"simple-erp-service/internal/models"
+	"simple-erp-service/internal/data-structure/dto"
+	"simple-erp-service/internal/data-structure/models"
 	"simple-erp-service/internal/utils"
 
 	"gorm.io/gorm"
@@ -27,10 +28,10 @@ func NewAuthService(db *gorm.DB, cfg *config.Config) *AuthService {
 
 // LoginResponse representa a resposta do login
 type LoginResponse struct {
-	User         models.UserResponse `json:"user"`
-	AccessToken  string              `json:"access_token"`
-	RefreshToken string              `json:"refresh_token"`
-	ExpiresIn    int                 `json:"expires_in"`
+	User         dto.ApiUserDetail `json:"user"`
+	AccessToken  string            `json:"access_token"`
+	RefreshToken string            `json:"refresh_token"`
+	ExpiresIn    int               `json:"expires_in"`
 }
 
 // Login autentica um usuário e retorna tokens JWT
@@ -66,7 +67,7 @@ func (s *AuthService) Login(username, password string) (*LoginResponse, error) {
 	var permissions []string
 	if user.Role != nil {
 		for _, perm := range user.Role.Permissions {
-			permissions = append(permissions, perm.Name)
+			permissions = append(permissions, perm.Permission)
 		}
 	}
 
@@ -87,7 +88,7 @@ func (s *AuthService) Login(username, password string) (*LoginResponse, error) {
 	s.db.Save(&user)
 
 	return &LoginResponse{
-		User:         user.ToResponse(),
+		User:         dto.ApiUserDetailFromModel(user),
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		ExpiresIn:    int(s.cfg.JWT.AccessTokenExp.Minutes()),
@@ -118,7 +119,7 @@ func (s *AuthService) RefreshToken(refreshToken string) (*LoginResponse, error) 
 	var permissions []string
 	if user.Role != nil {
 		for _, perm := range user.Role.Permissions {
-			permissions = append(permissions, perm.Name)
+			permissions = append(permissions, perm.Permission)
 		}
 	}
 
@@ -135,7 +136,7 @@ func (s *AuthService) RefreshToken(refreshToken string) (*LoginResponse, error) 
 	}
 
 	return &LoginResponse{
-		User:         user.ToResponse(),
+		User:         dto.ApiUserDetailFromModel(user),
 		AccessToken:  newAccessToken,
 		RefreshToken: newRefreshToken,
 		ExpiresIn:    int(s.cfg.JWT.AccessTokenExp.Minutes()),

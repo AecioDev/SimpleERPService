@@ -5,7 +5,7 @@ import (
 	"time" // Adicionar import para time
 
 	"simple-erp-service/config"
-	"simple-erp-service/internal/models"
+	"simple-erp-service/internal/data-structure/dto"
 	"simple-erp-service/internal/service"
 	"simple-erp-service/internal/utils"
 
@@ -83,7 +83,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	// --- PASSO CHAVE 2: ENVIAR APENAS DADOS DO USUÁRIO NO JSON ---
 	// Criar uma resposta que contém apenas os dados do usuário para o frontend
 	// Isso evita que o frontend tenha acesso direto aos tokens (que agora estão nos cookies)
-	successResponse := models.LoginSuccessResponse{
+	successResponse := dto.LoginSuccessResponse{
 		User: response.User,
 	}
 
@@ -132,7 +132,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	)
 
 	// Enviar apenas os dados do usuário no JSON
-	successResponse := models.RefreshTokenSuccessResponse{
+	successResponse := dto.RefreshTokenSuccessResponse{
 		User: response.User,
 	}
 
@@ -163,8 +163,8 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 		return
 	}
 
-	userResponse := models.LoginSuccessResponse{
-		User: user.ToResponse(),
+	userResponse := dto.LoginSuccessResponse{
+		User: dto.ApiUserDetailFromModel(*user),
 	}
 
 	utils.SuccessResponse(c, http.StatusOK, "Usuário encontrado", userResponse, nil)
