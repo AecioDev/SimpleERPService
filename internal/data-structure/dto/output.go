@@ -8,8 +8,8 @@ type ApiPagination struct {
 	Limit      int    `json:"limit"`
 	Sort       string `json:"sort"`
 	Order      string `json:"order"`
-	TotalRows  int64  `json:"total_rows"`
-	TotalPages int    `json:"total_pages"`
+	TotalRows  int64  `json:"totalRows"`
+	TotalPages int    `json:"totalPages"`
 }
 
 // ApiPaginationFromModel converte um objeto de paginação para PaginationDTO
