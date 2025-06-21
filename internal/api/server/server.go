@@ -31,7 +31,7 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 
 	// Configurar CORS
 	router.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"http://localhost:3000"}, // <--- MUDANÇA AQUI: Especifique a origem do seu frontend
+		AllowOrigins: []string{"http://localhost:3000", "http://localhost:3001"}, // <--- MUDANÇA AQUI: Especifique a origem do seu frontend
 		// Se você tiver múltiplos frontends ou um domínio de produção:
 		// AllowOrigins: []string{"http://localhost:3000", "https://seu-dominio-frontend.com"},
 
