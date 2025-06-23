@@ -53,17 +53,28 @@ func (r *GormPermissionRepository) FindAllFiltered(pagination *models.Pagination
 	query := r.GetDB().Model(&models.Permission{})
 
 	// Aplicar filtros
-	if filters.Name != "" && filters.Name != "T" { // T - Todos no Select q não aceitou vazio ainda rsrs
+	if filters.Name != "" {
 		query = query.Where("permission ILIKE ?", "%"+filters.Name+"%") // ILIKE para case-insensitive no PostgreSQL/MySQL
 	}
-	if filters.Module != "" && filters.Module != "T" {
+	if filters.Module != "" {
 		query = query.Where("module = ?", filters.Module)
 	}
-
 	if filters.RoleId != 0 {
-		// Isso requer um JOIN com a tabela many-to-many (role_permissions)
-		query = query.Joins("JOIN role_permissions ON role_permissions.permission_id = permissions.id").
-			Where("role_permissions.role_id = ?", filters.RoleId)
+		if filters.IsLinkedToRole != nil && *filters.IsLinkedToRole == false { // Se isLinkedToRole foi explicitamente setado para FALSE
+			// Queremos permissões NÃO vinculadas a este RoleId.
+			// Usamos NOT EXISTS para encontrar permissões que NÃO TÊM uma associação com o RoleId dado.
+			query = query.Where("NOT EXISTS (?)",
+				r.GetDB().Table("role_permissions").
+					Select("1").
+					Where("role_permissions.permission_id = permissions.id").
+					Where("role_permissions.role_id = ?", filters.RoleId),
+			)
+		} else { // Se isLinkedToRole é TRUE, ou não foi fornecido (e o padrão é buscar vinculadas)
+			// Queremos permissões VINCULADAS a este RoleId.
+			// Fazemos um JOIN com a tabela de associação para garantir que a permissão está ligada ao RoleId.
+			query = query.Joins("JOIN role_permissions ON role_permissions.permission_id = permissions.id").
+				Where("role_permissions.role_id = ?", filters.RoleId)
+		}
 	}
 
 	// Aplicar paginação

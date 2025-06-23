@@ -8,6 +8,7 @@ import (
 	"simple-erp-service/internal/repository"
 	"simple-erp-service/internal/service"
 	"simple-erp-service/internal/utils"
+	"simple-erp-service/internal/utils/path"
 	"simple-erp-service/internal/validator"
 
 	"github.com/gin-gonic/gin"
@@ -69,9 +70,8 @@ func (h *RoleHandler) GetRoles(c *gin.Context) {
 // @Failure 404 {object} utils.Response "Perfil não encontrado"
 // @Router /roles/{id} [get]
 func (h *RoleHandler) GetRole(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := path.IdFromPathParamOrSendError(c)
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "ID inválido", err.Error())
 		return
 	}
 

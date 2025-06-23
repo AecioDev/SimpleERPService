@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 
 	"simple-erp-service/internal/data-structure/dto"
@@ -49,10 +48,10 @@ func (h *PermissionHandler) GetPermissions(c *gin.Context) {
 	}
 
 	// Log para depuração: verifique o que foi bindado
-	log.Printf("GetPermissions: Filtros recebidos: PermissionName='%s', Module='%s', RoleId=%d",
-		filters.Name, filters.Module, filters.RoleId)
-	log.Printf("GetPermissions: Paginação recebida: Page=%d, Limit=%d",
-		pagination.Page, pagination.Limit)
+	// log.Printf("GetPermissions: Filtros recebidos: PermissionName='%s', Module='%s', RoleId=%d",
+	// 	filters.Name, filters.Module, filters.RoleId)
+	// log.Printf("GetPermissions: Paginação recebida: Page=%d, Limit=%d",
+	// 	pagination.Page, pagination.Limit)
 
 	permissions, err := h.permService.GetPermissions(&pagination, filters)
 	if err != nil {

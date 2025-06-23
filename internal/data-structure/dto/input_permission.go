@@ -16,7 +16,8 @@ type InUpdatePermission struct {
 
 // InGetPermissionsFilters representa os parâmetros de filtro para buscar permissões
 type InGetPermissionsFilters struct {
-	Name   string `form:"name"`   // Usará para o filtro por nome da permissão (ex: users.view)
-	Module string `form:"module"` // Usará para o filtro por módulo (ex: users)
-	RoleId uint   `form:"roleId"` // Opcional: para o filtro por Role ID (se for implementar)
+	Name           string `form:"name"`           // Usará para o filtro por nome da permissão (ex: users.view)
+	Module         string `form:"module"`         // Usará para o filtro por módulo (ex: users)
+	RoleId         uint   `form:"roleId"`         // Opcional: para o filtro por Role ID (se for implementar)
+	IsLinkedToRole *bool  `form:"isLinkedToRole"` // Opcional: para o filtro se está vinculado a role ou não.
 }
